@@ -1,0 +1,135 @@
+networks:
+  default:
+    name: ${COMPOSE_PROJECT_NAME}
+
+volumes:
+  1ak-group-hack-zookeeper:
+  1ak-group-hack-kafka:
+  1ak-group-hack-minio:
+  1ak-group-hack-postgres:
+  1ak-group-hack-redis:
+
+services:
+  zookeeper:
+    image: 'confluentinc/cp-zookeeper:${CONFLUENT_PLATFORM_VERSION}'
+    container_name: ${ZOOKEEPER_CONTAINER}
+    ports:
+      - "${ZOOKEEPER_PORT}:2181"
+    volumes:
+      - 1ak-group-hack-zookeeper:/var/lib/zookeeper/data
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    healthcheck:
+      test: [ "CMD-SHELL", "zkServer.sh status" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  kafka-broker:
+    image: 'confluentinc/cp-kafka:${CONFLUENT_PLATFORM_VERSION}'
+    container_name: ${KAFKA_CONTAINER}
+    depends_on:
+      - zookeeper
+    ports:
+      - "${KAFKA_EXTERNAL_PORT}:9092"
+      - "${KAFKA_JMX_PORT}:9101"
+    volumes:
+      - 1ak-group-hack-kafka:/var/lib/kafka/data
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${KAFKA_CONTAINER}:29092,PLAINTEXT_HOST://localhost:9092
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  kafka-init:
+    image: confluentinc/cp-kafka:${CONFLUENT_PLATFORM_VERSION}
+    container_name: kafka-init
+    depends_on:
+      kafka-broker:
+        condition: service_healthy
+    command: >
+      bash -c "
+        echo 'Waiting for Kafka to be ready...';
+        until kafka-topics --bootstrap-server kafka-broker:29092 --list; do
+          sleep 5;
+        done;
+      kafka-topics --bootstrap-server kafka-broker:29092 \
+      --create \
+      --topic ${KAFKA_TOPIC} \
+      --partitions 1 \
+      --replication-factor 1 \
+      --config retention.ms=604800000 \
+      --if-not-exists && \
+        echo 'Topic initialized successfully'
+      "
+
+  kafka-ui:
+    container_name: ${KAFKA_UI_CONTAINER}
+    image: 'provectuslabs/kafka-ui:latest'
+    ports:
+      - "${KAFKA_UI_PORT}:8080"
+    depends_on:
+      - kafka-broker
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-broker:29092
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: ${COMPOSE_PROJECT_NAME}
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://1ak-group-hack-kafka-connect:8083
+
+  redis:
+    image: 'redis:${REDIS_VERSION}'
+    container_name: ${REDIS_CONTAINER}
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - 1ak-group-hack-redis:/data
+
+  postgres:
+    image: 'postgres:${POSTGRES_VERSION}'
+    container_name: ${POSTGRES_CONTAINER}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - 1ak-group-hack-postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_USER_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+  minio:
+    image: 'minio/minio:${MINIO_VERSION}'
+    container_name: ${MINIO_CONTAINER}
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - 1ak-group-hack-minio:/data
+    ports:
+      - "${MINIO_API_PORT}:9000"
+      - "${MINIO_WEB_CONSOLE_PORT}:9001"
+
+  minio-init:
+    image: 'minio/mc:${MINIO_MC_VERSION}'
+    container_name: minio-init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+        echo 'Waiting for MinIO to be ready...';
+        until mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}; do
+          echo 'MinIO is not ready yet. Retrying in 2s...';
+          sleep 2;
+        done;
+        echo 'MinIO is ready. Creating bucket if needed...';
+        mc mb myminio/${MINIO_BUCKET} || echo 'Bucket already exists';
+      "
