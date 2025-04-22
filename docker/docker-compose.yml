@@ -52,7 +52,7 @@ services:
 
   kafka-init:
     image: confluentinc/cp-kafka:${CONFLUENT_PLATFORM_VERSION}
-    container_name: kafka-init
+    container_name: ${COMPOSE_PROJECT_NAME}-kafka-init
     depends_on:
       kafka-broker:
         condition: service_healthy
@@ -120,7 +120,7 @@ services:
 
   minio-init:
     image: 'minio/mc:${MINIO_MC_VERSION}'
-    container_name: minio-init
+    container_name: ${COMPOSE_PROJECT_NAME}-minio-init
     depends_on:
       - minio
     entrypoint: >
