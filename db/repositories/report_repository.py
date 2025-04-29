@@ -2,7 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime
 from typing import List, Optional
-from db.models import GeneratedReport
+from db.models import generatedReport
+from db.models.generatedReport import GeneratedReport
 
 
 class ReportRepository:
