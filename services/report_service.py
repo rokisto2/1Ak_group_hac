@@ -1,7 +1,7 @@
 from uuid import uuid4
 from datetime import datetime
 from fastapi import HTTPException
-from db.models import GeneratedReport
+from db.models import generatedReport
 from db.repositories import ReportRepository, S3StorageRepository
 import asyncio
 
