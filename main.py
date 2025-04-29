@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 import os
-from api.first import router
+import api.reports
 
 UPLOAD_FOLDER = os.path.abspath('uploads')
 
 app = FastAPI()
-app.include_router(router, prefix='/api')
+
+app.include_router(api.reports.router, prefix='/api')
 
 @app.on_event("startup")
 async def startup_event():
