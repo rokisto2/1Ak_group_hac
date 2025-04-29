@@ -21,7 +21,11 @@ class Settings(BaseSettings):
     REDIS_PORT: int
     POSTGRES_VERSION:str
     POSTGRES_HOST:str
+    MINIO_HOST:str
 
+    @property
+    def MINIO_ENDPOINT_URL(self):
+        return f"http://{self.MINIO_HOST}:{self.MINIO_API_PORT}"
     @property
     def DATABASE_URL_asyncpg(self):
         print(f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_USER_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}")
@@ -41,17 +45,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-#
-# class Config:
-#     POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
-#     POSTGRES_PASSWORD = os.getenv("POSTGRES_USER_PASSWORD", "postgres")
-#     POSTGRES_CONTAINER = os.getenv("POSTGRES_CONTAINER", "localhost")
-#     POSTGRES_PORT = os.getenv("POSTGRES_PORT", 5432)
-#     POSTGRES_DB = os.getenv("POSTGRES_DB", "1ak_group_hack")
-#
-#     SQLALCHEMY_DATABASE_URI = f"postgresql+asyncpg:://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_CONTAINER}:{POSTGRES_PORT}/{POSTGRES_DB}"
-#
-#     SQLALCHEMY_TRACK_MODIFICATIONS = False
-#     SQLALCHEMY_ECHO = True
-#
-# settings = Config()
