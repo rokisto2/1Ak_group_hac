@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from db.models import User
-from base_repository import BaseRepository
+from .base_repository import BaseRepository
 from core.dictionir.ROLE import UserRoles
 
 

@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, UUID
 from datetime import datetime, timedelta
 import secrets
 from typing import Optional
@@ -35,7 +35,7 @@ class ActivationKeyRepository:
 
     async def upsert_key(
             self,
-            user_id: int,
+            user_id: UUID(as_uuid=True),
             expires_hours: int = 24,
             autocommit: bool = True  # Новый параметр
     ) -> ActivationKey:
