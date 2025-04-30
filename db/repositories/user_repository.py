@@ -11,12 +11,15 @@ class UserRepository(BaseRepository):
         super().__init__(db)
         self.model = User
 
-    async def get(self, user_id):
-        """Получить пользователя по ID"""
+    async def get_user_by_roly(self, role: UserRoles = UserRoles.USER, offset: int = 0, limit: int = 10):
+        """Получить пользователей по роли"""
         result = await self.db.execute(
-            select(self.model).where(self.model.id == user_id)
+            select(self.model)
+            .where(self.model.user_type == role)
+            .offset(offset)
+            .limit(limit)
         )
-        return result.scalar_one_or_none()
+        return result.scalars().all()
 
     async def get_by_telegram_id(self, chat_id):
         """Получить пользователя по chat_id"""
