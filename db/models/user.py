@@ -1,18 +1,16 @@
-from sqlalchemy import Column, Integer, String, DateTime, Index, JSON, Text
+import uuid
+from sqlalchemy import Column, String, Integer, Boolean
+from sqlalchemy.dialects.postgresql import UUID
 from .base import Base
 from core.dictionir.ROLE import UserRoles
 
 class User(Base):
     __tablename__ = 'users'
 
-    id = Column(Integer, primary_key=True)
-    telegram_id = Column(String, unique=True, nullable=False)
-    full_name = Column(String)
-    email = Column(String, nullable=True)
-    password_hash = Column(String, nullable=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    chat_id = Column(String, unique=True, nullable=True)  # Может быть null
+    full_name = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    password_hash = Column(String, nullable=False)
     user_type = Column(String, default=UserRoles.USER)
-    is_active = Column(Integer, default=1)
-
-
-
 

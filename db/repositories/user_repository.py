@@ -9,18 +9,17 @@ class UserRepository(BaseRepository):
         super().__init__(db)
         self.model = User
 
-    def get_by_telegram_id(self, telegram_id):
-        """Получить пользователя по telegram_id"""
-        return self.db.query(self.model).filter(self.model.telegram_id == telegram_id).first()
+    def get_by_telegram_id(self, chat_id):
+        """Получить пользователя по chat_id"""
+        return self.db.query(self.model).filter(self.model.chat_id == chat_id).first()
 
     def get_by_email(self, email):
         """Получить пользователя по email"""
         return self.db.query(self.model).filter(self.model.email == email).first()
 
-
     def get_superusers(self):
         """Получить всех суперпользователей"""
-        return self.db.query(self.model).filter(self.model.role == UserRoles.SUPERUSER).all()
+        return self.db.query(self.model).filter(self.model.user_type == UserRoles.SUPERUSER).all()
 
     def deactivate_user(self, user_id):
         """Деактивировать пользователя"""
@@ -46,10 +45,16 @@ class UserRepository(BaseRepository):
             return self.update(user)
         return None
 
-    def create_user(self, telegram_id, full_name=None, email=None, password_hash=None, role=UserRoles.USER):
+    def create_user(self, full_name, email, password_hash,  chat_id = None, role=UserRoles.USER):
         """Создать нового пользователя"""
-        user = User(telegram_id=telegram_id, full_name=full_name, email=email,
-                    password_hash=password_hash, role=role)
+        user = User(
+            email = email,
+            full_name = full_name,
+            password_hash = password_hash,
+            chat_id = chat_id,
+            user_type = role
+
+        )
         return self.create(user)
 
     def update_user_info(self, user_id, **kwargs):
