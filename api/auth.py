@@ -134,3 +134,29 @@ async def change_password(
         new_password=data.new_password
     )
     return {"success": result}
+
+
+@router.post("/init-superuser", status_code=status.HTTP_201_CREATED)
+async def init_superuser(
+        user_data: UserCreate,
+        db: AsyncSession = Depends(get_db_session)
+):
+    # Проверяем, что в системе еще нет суперпользователей
+    auth_service = AuthService(db)
+    superusers = await auth_service.user_repo.get_superusers()
+
+    if superusers:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Суперпользователь уже существует"
+        )
+
+    # Создаем суперпользователя
+    user = await auth_service.register_user(
+        email=user_data.email,
+        full_name=user_data.full_name,
+        password=user_data.password,
+        role=UserRoles.SUPERUSER
+    )
+
+    return {"id": user.id, "email": user.email, "role": user.user_type}

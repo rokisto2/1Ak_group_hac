@@ -1,27 +1,37 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete
 
 class BaseRepository:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.model = None
         self.db = db
 
-    def get(self, object_id):
-        return self.db.query(self.model).filter(self.model.id == object_id).first()
+    async def get(self, object_id):
+        """Получить объект по ID"""
+        result = await self.db.execute(
+            select(self.model).where(self.model.id == object_id)
+        )
+        return result.scalar_one_or_none()
 
-    def get_all(self):
-        return self.db.query(self.model).all()
+    async def get_all(self):
+        """Получить все объекты"""
+        result = await self.db.execute(select(self.model))
+        return result.scalars().all()
 
-    def create(self, obj):
+    async def create(self, obj):
+        """Создать объект"""
         self.db.add(obj)
-        self.db.commit()
-        self.db.refresh(obj)
+        await self.db.commit()
+        await self.db.refresh(obj)
         return obj
 
-    def update(self, obj):
-        self.db.commit()
-        self.db.refresh(obj)
+    async def update(self, obj):
+        """Обновить объект"""
+        await self.db.commit()
+        await self.db.refresh(obj)
         return obj
 
-    def delete(self, obj):
+    async def delete(self, obj):
+        """Удалить объект"""
         self.db.delete(obj)
-        self.db.commit()
+        await self.db.commit()
