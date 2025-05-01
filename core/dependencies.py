@@ -8,7 +8,29 @@ from db.config import settings
 from db.database import async_session_factory
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.repositories import ReportRepository, S3StorageRepository
+from db.secret_config import secret_settings
+from utils.email import EmailService
 
+# Singleton экземпляр сервиса электронной почты
+_email_service = None
+
+
+async def get_email_service() -> EmailService:
+    """
+    Получение экземпляра сервиса отправки электронной почты.
+
+    Returns:
+        EmailService: сервис отправки электронной почты
+    """
+    global _email_service
+    if _email_service is None:
+        _email_service = EmailService(
+            credentials_file=secret_settings.EMAIL_CREDENTIALS_FILE,
+            app_email=secret_settings.EMAIL_APP_ADDRESS,
+            app_name=secret_settings.EMAIL_APP_NAME,
+            token_file=secret_settings.EMAIL_TOKEN_PATH
+        )
+    return _email_service
 
 async def get_db_session() -> AsyncGenerator[Any, Any]:
     async with async_session_factory() as session:
