@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from uuid import UUID
 
-from core.dependencies import get_db_session
+from core.dependencies import get_db_session, get_email_service
 from services.auth_service import AuthService
 from core.dictionir.ROLE import UserRoles
 from schemas.user import (PasswordChange, TelegramBind, UserCreate, Token)
@@ -18,7 +18,7 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 
 # Pydantic модели
@@ -36,7 +36,9 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db_session)):
+async def get_current_user(
+        token: str = Depends(oauth2_scheme),
+        db: AsyncSession = Depends(get_db_session)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Недействительные учетные данные",
@@ -68,7 +70,9 @@ async def get_admin_user(user=Depends(get_current_user)):
 
 # Эндпоинты
 @router.post("/login", response_model=Token)
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db_session)):
+async def login(
+        form_data: OAuth2PasswordRequestForm = Depends(),
+        db: AsyncSession = Depends(get_db_session)):
     auth_service = AuthService(db)
     user = await auth_service.login(form_data.username, form_data.password)
 

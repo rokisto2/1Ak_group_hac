@@ -12,8 +12,10 @@ from db.repositories.user_repository import UserRepository
 from db.repositories.activation_key_repository import ActivationKeyRepository
 from db.models import User, ActivationKey
 from core.dictionir.ROLE import UserRoles
-from utils.email import send_registration_email
+# from utils.email import send_registration_email
 from passlib.context import CryptContext
+
+from utils import EmailService
 
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -58,14 +60,14 @@ class AuthService:
             role=role
         )
 
-        # Отправка письма с данными
-        if send_password:
-            send_registration_email(
-                to=email,
-                full_name=full_name,
-                login=email,
-                password=password
-            )
+        # # Отправка письма с данными
+        # if send_password:
+        #     await self.email_service.send_registration_email(
+        #         to=email,
+        #         full_name=full_name,
+        #         login=email,
+        #         password=password
+        #     )
 
         return user
 
