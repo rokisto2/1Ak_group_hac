@@ -19,6 +19,7 @@ class ReportService:
             excel_data: bytes,
             template_data: bytes,
             report_name: str,
+            user_id: uuid4
     ) -> GeneratedReport:
         """Generate and save reports"""
         try:
@@ -45,7 +46,8 @@ class ReportService:
                 report_name=report_name,
                 report_url=paths["report"],
                 excel_url=paths["excel"],
-                template_url=paths["template"]
+                template_url=paths["template"],
+                user_id=user_id
             )
 
         except Exception as e:

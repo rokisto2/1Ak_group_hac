@@ -1,5 +1,7 @@
 import uuid
 from sqlalchemy import Column, String, Integer, Boolean, UUID
+from sqlalchemy.orm import relationship
+
 from .base import Base
 from core.dictionir.ROLE import UserRoles
 
@@ -14,3 +16,5 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     user_type = Column(String, default=UserRoles.USER)
 
+    reports = relationship("GeneratedReport", back_populates="user")
+    delivery_logs = relationship("ReportDeliveryLog", back_populates="user")

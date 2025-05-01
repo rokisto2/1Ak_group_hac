@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime
@@ -16,12 +18,14 @@ class ReportRepository:
             report_url: str,
             excel_url: str,
             template_url: str,
+            user_id: uuid4
     ) -> GeneratedReport:
         report = GeneratedReport(
             report_name=report_name,
             report_url=report_url,
             excel_url=excel_url,
             template_url=template_url,
+            user_id=user_id,
         )
         self._session.add(report)
         await self._session.commit()
