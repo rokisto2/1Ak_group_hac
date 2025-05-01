@@ -97,7 +97,9 @@ class AuthService:
             expires_hours=expires_hours
         )
 
-        return activation_key.key
+        key_value = activation_key.key
+
+        return key_value
 
     async def bind_telegram(self, key: str, chat_id: str):
         """Привязывает Telegram аккаунт к пользователю"""
@@ -116,29 +118,44 @@ class AuthService:
         )
         activation_key, user = result.first()
 
-        # Проверка срока действия
-        if activation_key.expires_at < datetime.utcnow():
+        # Проверка срока действия ключа
+        current_time = datetime.utcnow()
+        expires_at = activation_key.expires_at
+
+        # Приводим обе даты к одному формату
+        if expires_at.tzinfo:
+            from datetime import timezone
+            current_time = current_time.replace(tzinfo=timezone.utc)
+        else:
+            expires_at = expires_at.replace(tzinfo=None)
+
+        if expires_at < current_time:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Срок действия ключа истек"
             )
 
+        # Извлечение ID пользователя сразу, чтобы не обращаться к нему позже
+        user_id = user.id
+
         # Проверка, не занят ли chat_id другим пользователем
         existing_user = await self.user_repo.get_by_telegram_id(chat_id)
-        if existing_user and existing_user.id != user.id:
+        if existing_user and existing_user.id != user_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Данный Telegram аккаунт уже привязан к другому пользователю"
             )
 
         # Обновление пользователя и удаление ключа
-        await self.user_repo.update_user_info(user.id, chat_id=chat_id)
+        await self.user_repo.update_user_info(user_id, chat_id=chat_id)
         await self.session.execute(
             delete(ActivationKey).where(ActivationKey.key == key)
         )
         await self.session.commit()
 
-        return user
+        # Явно загружаем обновленного пользователя перед возвратом
+        updated_user = await self.user_repo.get(user_id)
+        return updated_user
 
     async def change_password(self, user_id: UUID, old_password: str, new_password: str):
         """Изменение пароля пользователя"""

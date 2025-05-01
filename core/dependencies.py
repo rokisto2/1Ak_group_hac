@@ -3,7 +3,10 @@ from typing import Any, AsyncGenerator
 import aioboto3
 from botocore.client import BaseClient
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
+from starlette import status
+
+from core.dictionir.ROLE import UserRoles
 from db.config import settings
 from db.database import async_session_factory
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -62,3 +65,5 @@ async def get_report_repository(
         session: AsyncSession = Depends(get_db_session)
 ) -> ReportRepository:
     return ReportRepository(session)
+
+

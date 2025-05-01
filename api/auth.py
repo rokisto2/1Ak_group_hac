@@ -122,7 +122,8 @@ async def bind_telegram(
 ):
     auth_service = AuthService(db)
     user = await auth_service.bind_telegram(data.key, data.chat_id)
-    return {"success": True, "user_id": user.id}
+    user_id = user.id
+    return {"success": True, "user_id": user_id}
 
 
 @router.post("/password/change")

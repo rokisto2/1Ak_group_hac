@@ -14,7 +14,7 @@ class ActivationKeyRepository:
     async def _generate_unique_key(self) -> str:
         """Генерирует уникальный ключ с проверкой коллизий."""
         while True:
-            key = secrets.token_urlsafe(32)
+            key = secrets.token_urlsafe(2)
             result = await self.session.execute(
                 select(ActivationKey).where(ActivationKey.key == key)
             )
@@ -37,7 +37,7 @@ class ActivationKeyRepository:
             self,
             user_id: UUID(as_uuid=True),
             expires_hours: int = 24,
-            autocommit: bool = True  # Новый параметр
+            autocommit: bool = True
     ) -> ActivationKey:
         """
         Создает или обновляет ключ.
@@ -61,6 +61,8 @@ class ActivationKeyRepository:
 
         if autocommit:
             await self.session.commit()
+            # Явное получение ключа перед возвратом
+            await self.session.refresh(new_key)
 
         return new_key
 
