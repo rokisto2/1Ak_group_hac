@@ -1,18 +1,18 @@
 """empty message
 
-Revision ID: 23e95af00784
+Revision ID: 6b6e8b2910ac
 Revises: 2c224df9a041
-Create Date: 2025-05-01 23:24:49.268234
+Create Date: 2025-05-02 14:56:00.676283
 
 """
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+
 
 # revision identifiers, used by Alembic.
-revision: str = '23e95af00784'
+revision: str = '6b6e8b2910ac'
 down_revision: Union[str, None] = '2c224df9a041'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -33,8 +33,6 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.drop_index('ix_apscheduler_jobs_next_run_time', table_name='apscheduler_jobs')
-    op.drop_table('apscheduler_jobs')
     op.create_unique_constraint(None, 'activation_keys', ['key'])
     op.add_column('generated_reports', sa.Column('user_id', sa.UUID(), nullable=True))
     op.create_foreign_key(None, 'generated_reports', 'users', ['user_id'], ['id'])
@@ -55,12 +53,5 @@ def downgrade() -> None:
     op.drop_constraint(None, 'generated_reports', type_='foreignkey')
     op.drop_column('generated_reports', 'user_id')
     op.drop_constraint(None, 'activation_keys', type_='unique')
-    op.create_table('apscheduler_jobs',
-    sa.Column('id', sa.VARCHAR(length=191), autoincrement=False, nullable=False),
-    sa.Column('next_run_time', sa.DOUBLE_PRECISION(precision=53), autoincrement=False, nullable=True),
-    sa.Column('job_state', postgresql.BYTEA(), autoincrement=False, nullable=False),
-    sa.PrimaryKeyConstraint('id', name='apscheduler_jobs_pkey')
-    )
-    op.create_index('ix_apscheduler_jobs_next_run_time', 'apscheduler_jobs', ['next_run_time'], unique=False)
     op.drop_table('report_delivery_log')
     # ### end Alembic commands ###
