@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.repositories import ReportRepository, S3StorageRepository, UserRepository
 from db.repositories.report_delivery_log_repository import ReportDeliveryLogRepository
 from db.secret_config import secret_settings
+from services import ReportDeliveryService, AuthService
 from services.email_schedule_send import EmailScheduleSend
 from services.scheduler_service import SchedulerService
 
@@ -115,4 +116,29 @@ async def get_report_repository(
 async def get_report_delivery_log_repository(session: AsyncSession = Depends(get_db_session)) -> ReportDeliveryLogRepository:
     return ReportDeliveryLogRepository(session)
 
+async def get_report_delivery_service(
+        email_schedule_send: EmailScheduleSend = Depends(get_email_scheduler),
+        user_repository: UserRepository = Depends(get_user_repository),
+        s3_storage_repository: S3StorageRepository = Depends(get_s3_storage_repository),
+        report_repository: ReportRepository = Depends(get_report_repository),
+        report_delivery_log_repository: ReportDeliveryLogRepository = Depends(get_report_delivery_log_repository)
+) -> ReportDeliveryService:
+    return ReportDeliveryService(
+        temp_files_dir=settings.TEMP_FILES_DIR,
+        email_schedule_send=email_schedule_send,
+        user_repository=user_repository,
+        s3_storage_repository=s3_storage_repository,
+        report_repository=report_repository,
+        report_delivery_log_repository=report_delivery_log_repository
+    )
+
+
+async def get_auth_service(
+        session: AsyncSession = Depends(get_db_session),
+        email_schedule_send: EmailScheduleSend = Depends(get_email_scheduler)
+) -> AuthService:
+    return AuthService(
+        session=session,
+        email_schedule_send=email_schedule_send
+    )
 

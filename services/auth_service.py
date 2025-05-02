@@ -15,16 +15,18 @@ from passlib.context import CryptContext
 
 from db.repositories import UserRepository
 from db.repositories.activation_key_repository import ActivationKeyRepository
+from services.email_schedule_send import EmailScheduleSend
 from utils import EmailService
 
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class AuthService:
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession,email_schedule_send:EmailScheduleSend):
         self.session = session
         self.user_repo = UserRepository(session)
         self.activation_key_repo = ActivationKeyRepository(session)
+        self.email_schedule_send = email_schedule_send
 
     def _generate_password(self, length=10) -> str:
         """Генерирует случайный пароль"""
@@ -60,14 +62,14 @@ class AuthService:
             role=role
         )
 
-        # # Отправка письма с данными
-        # if send_password:
-        #     await self.email_service.send_registration_email(
-        #         to=email,
-        #         full_name=full_name,
-        #         login=email,
-        #         password=password
-        #     )
+
+        if send_password:
+            await self.email_schedule_send.schedule_registration_email(
+                email= email,
+                full_name= full_name,
+                login=email,
+                password=password
+            )
 
         return user
 
