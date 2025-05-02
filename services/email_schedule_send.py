@@ -219,12 +219,15 @@ async def send_mass_notification_task(
         )
 
         # Отправляем email
-        await email_service.send_email(
+        success: bool = await email_service.send_email(
             to=to_email,
             subject=subject,
             text_content=message,
             attachments=attachments
         )
+
+        if success is False:
+            raise Exception("Ошибка при отправке email")
 
         # Обновляем статус в БД
         async with local_session_factory() as session:
@@ -295,8 +298,7 @@ class EmailScheduleSend:
 
     async def schedule_mass_report(
             self,
-            email_list: list[str],
-            user_id: uuid.UUID,
+            user_info: list[tuple[str,uuid.UUID]],
             report_id: uuid.UUID,
             subject: str,
             message: str,
@@ -307,8 +309,7 @@ class EmailScheduleSend:
         Отправка массовых email-сообщений с вложениями
 
         Args:
-            email_list: Список email-адресов получателей
-            user_id: ID пользователя, инициирующего рассылку
+            user_info: Список email-адресов и id получателей
             report_id: ID отчёта/рассылки
             subject: Тема сообщения
             message: Текст сообщения
@@ -324,10 +325,10 @@ class EmailScheduleSend:
         async with async_session_factory() as session:
             log_repo = ReportDeliveryLogRepository(session)
 
-            for email in email_list:
+            for email, recipient_id in user_info:
                 # Создаем запись в логе о начале отправки
                 log = await log_repo.create_log(
-                    user_id=user_id,
+                    recipient_id=recipient_id,
                     report_id=report_id,
                     method=DeliveryMethodEnum.EMAIL,
                     status=DeliveryStatusEnum.SENDING
@@ -359,7 +360,7 @@ class EmailScheduleSend:
 
         return {
             "job_ids": job_ids,
-            "total": len(email_list)
+            "total": len(user_info)
         }
 
     def cancel_job(self, job_id: str) -> bool:

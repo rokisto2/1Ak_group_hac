@@ -12,6 +12,8 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
+# from services.email_schedule_send import EmailServiceManager
+
 
 class EmailService:
     def __init__(
@@ -29,14 +31,14 @@ class EmailService:
         self.service = None
         self.session = None  # Добавляем атрибут для хранения сессии
 
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        # Закрываем сессию, если она существует
-        if hasattr(self, 'session') and self.session and not self.session.closed:
-            await self.session.close()
-            print("aiohttp сессия успешно закрыта")
+    # async def __aenter__(self):
+    #     return self
+    #
+    # async def __aexit__(self, exc_type, exc_val, exc_tb):
+    #     # Закрываем сессию, если она существует
+    #     if hasattr(self, 'session') and self.session and not self.session.closed:
+    #         await self.session.close()
+    #         print("aiohttp сессия успешно закрыта")
 
     async def _get_service(self):
         creds = None
@@ -60,12 +62,12 @@ class EmailService:
         # Получаем сервис
         service = build('gmail', 'v1', credentials=creds)
 
-        # Найти и зарегистрировать сессии aiohttp
-        import gc
-        import aiohttp
-        for obj in gc.get_objects():
-            if isinstance(obj, aiohttp.ClientSession) and not obj.closed:
-                EmailServiceManager.register_session(obj)
+        # # Найти и зарегистрировать сессии aiohttp
+        # import gc
+        # import aiohttp
+        # for obj in gc.get_objects():
+        #     if isinstance(obj, aiohttp.ClientSession) and not obj.closed:
+        #         EmailServiceManager.register_session(obj)
 
         return service
 
