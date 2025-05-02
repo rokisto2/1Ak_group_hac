@@ -27,11 +27,12 @@ router = APIRouter()
 async def start_mailing(
         request: MailingRequest = Body(...)
 ):
+    # TODO разобраться где бот будет хранить файлы
     """
     Запускает рассылку файла отчета по указанным chat_id напрямую через Telegram Bot API
     """
     # Проверяем существование файла
-    full_path = os.path.join(request.report_path)
+    full_path = request.report_path
     if not os.path.exists(full_path) or not os.path.isfile(full_path):
         raise HTTPException(status_code=404, detail="Файл отчета не найден")
 
@@ -47,13 +48,11 @@ async def start_mailing(
                 # Формируем multipart/form-data запрос
                 data = aiohttp.FormData()
                 data.add_field('chat_id', str(chat_id))
-                data.add_field('caption', f"Отчет: {request.report_name}")
+                data.add_field('caption', f"Отчет: по потреблению електроэнергии за")
 
                 # Открываем и добавляем файл
-                with open(full_path, 'rb') as file:
-                    data.add_field('document', file,
-                                   filename=os.path.basename(full_path),
-                                   content_type='application/octet-stream')
+
+                data.add_field('document', open(full_path, 'rb') )
 
                 async with client.post(telegram_url, data=data) as response:
                     response_data = await response.json()
