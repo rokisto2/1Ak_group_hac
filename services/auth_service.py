@@ -8,13 +8,13 @@ from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 
-from db.repositories.user_repository import UserRepository
-from db.repositories.activation_key_repository import ActivationKeyRepository
 from db.models import User, ActivationKey
 from core.dictionir.ROLE import UserRoles
 # from utils.email import send_registration_email
 from passlib.context import CryptContext
 
+from db.repositories import UserRepository
+from db.repositories.activation_key_repository import ActivationKeyRepository
 from utils import EmailService
 
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")

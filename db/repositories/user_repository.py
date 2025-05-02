@@ -1,4 +1,4 @@
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 from db.models import User
 from .base_repository import BaseRepository
 from core.dictionir.ROLE import UserRoles
@@ -11,7 +11,15 @@ class UserRepository(BaseRepository):
         super().__init__(db)
         self.model = User
 
-    async def get_user_by_roly(self, role: UserRoles = UserRoles.USER, offset: int = 0, limit: int = 10):
+    async def get_users_by_ids(self, user_ids: list[UUID]) -> list[User]:
+        """Получить список пользователей по их ID"""
+        result = await self.db.execute(
+            select(self.model)
+            .where(self.model.id.in_(user_ids))
+        )
+        return result.scalars().all()
+
+    async def get_user_by_roly(self, role: str = UserRoles.USER, offset: int = 0, limit: int = 10):
         """Получить пользователей по роли"""
         result = await self.db.execute(
             select(self.model)
@@ -20,6 +28,13 @@ class UserRepository(BaseRepository):
             .limit(limit)
         )
         return result.scalars().all()
+
+    async def get_count_by_role(self, role: str) -> int:
+        """Получить количество пользователей с указанной ролью"""
+        result = await self.db.execute(
+            select(func.count()).where(User.user_type == role)
+        )
+        return result.scalar_one()
 
     async def get_by_telegram_id(self, chat_id):
         """Получить пользователя по chat_id"""

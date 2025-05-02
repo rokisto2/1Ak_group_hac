@@ -6,10 +6,10 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from uuid import UUID
 
-from core.dependencies import get_db_session, get_email_service
-from services.auth_service import AuthService
+from core.dependencies import get_db_session
 from core.dictionir.ROLE import UserRoles
 from schemas.user import (PasswordChange, TelegramBind, UserCreate, Token)
+from services import AuthService
 
 # Настройки JWT
 #TODO: Добавить потом чтение SECRET_KEY из env
@@ -150,11 +150,11 @@ async def init_superuser(
     auth_service = AuthService(db)
     superusers = await auth_service.user_repo.get_superusers()
 
-    if superusers:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Суперпользователь уже существует"
-        )
+    # if superusers:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST,
+    #         detail="Суперпользователь уже существует"
+    #     )
 
     # Создаем суперпользователя
     user = await auth_service.register_user(

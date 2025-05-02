@@ -10,7 +10,8 @@ from core.dictionir.ROLE import UserRoles
 from db.config import settings
 from db.database import async_session_factory
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.repositories import ReportRepository, S3StorageRepository
+from db.repositories import ReportRepository, S3StorageRepository, UserRepository
+from db.repositories.report_delivery_log_repository import ReportDeliveryLogRepository
 from db.secret_config import secret_settings
 from utils.email import EmailService
 
@@ -60,6 +61,8 @@ async def get_s3_storage_repository(
     await repo.initialize()
     return repo
 
+async def get_user_repository(session: AsyncSession = Depends(get_db_session)) -> UserRepository:
+    return UserRepository(session)
 
 async def get_report_repository(
         session: AsyncSession = Depends(get_db_session)
