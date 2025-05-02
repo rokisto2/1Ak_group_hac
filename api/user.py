@@ -8,33 +8,10 @@ from typing import Dict, List
 from core.dependencies import get_db_session, get_user_repository
 from core.dictionir.ROLE import UserRoles
 from db.repositories import UserRepository
+from schemas.user import UserPaginationResponse
 from services.user_service import UserService
 
 router = APIRouter(prefix="/users", tags=["users"])
-
-
-class UserOut(BaseModel):
-    id: uuid.UUID  # Используем UUID тип напрямую
-    full_name: str
-    email: str
-    user_type: str
-
-    class Config:
-        from_attributes = True
-
-
-class PaginationOut(BaseModel):
-    total: int
-    page: int
-    per_page: int
-    total_pages: int
-    has_next: bool
-    has_prev: bool
-
-class UserPaginationResponse(BaseModel):
-    users: List[UserOut]
-    pagination: PaginationOut
-
 
 @router.get("/", response_model=UserPaginationResponse)
 async def get_users_by_role(

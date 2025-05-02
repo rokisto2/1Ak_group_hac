@@ -1,7 +1,10 @@
-from typing import Optional
+import uuid
+from typing import Optional, List
 from pydantic import BaseModel, EmailStr, UUID4
 
 from core.dictionir.ROLE import UserRoles
+from schemas.core import PaginationOut
+
 
 class Token(BaseModel):
     access_token: str
@@ -30,3 +33,17 @@ class PasswordChange(BaseModel):
 class TelegramBind(BaseModel):
     key: str
     chat_id: str
+
+
+class UserOut(BaseModel):
+    id: uuid.UUID  # Используем UUID тип напрямую
+    full_name: str
+    email: str
+    user_type: str
+
+    class Config:
+        from_attributes = True
+
+class UserPaginationResponse(BaseModel):
+    users: List[UserOut]
+    pagination: PaginationOut
