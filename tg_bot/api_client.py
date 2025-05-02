@@ -22,7 +22,4 @@ class ApiClient:
                 return None
 
     async def send_report_notification(self, chat_id: int, report_id: str, report_name: str):
-        """Отправка уведомления о новом отчете"""
-        # Здесь может быть логика для записи в какую-то таблицу или API-эндпоинт
-        # о том, что пользователю нужно отправить уведомление
         pass

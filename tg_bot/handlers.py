@@ -38,8 +38,9 @@ async def process_key(message: Message, state: FSMContext):
             "❌ Неверный ключ или произошла ошибка при привязке аккаунта. "
             "Пожалуйста, проверьте ключ и попробуйте снова, или получите новый ключ в личном кабинете."
         )
-
     await state.clear()
+
+
 
 async def register_handlers(dp):
     """Регистрация обработчиков команд"""
