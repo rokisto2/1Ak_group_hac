@@ -1,5 +1,7 @@
-from uuid import uuid4
+from typing import List
+from uuid import uuid4, UUID
 
+from sqlalchemy import func, select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.models.report_delivery_log import ReportDeliveryLog
 from db.enums import DeliveryMethodEnum, DeliveryStatusEnum
@@ -27,3 +29,27 @@ class ReportDeliveryLogRepository:
             log.error_message = error_message
             await self.session.flush()
         return log
+
+    async def get_user_logs_count(self, user_id: UUID) -> int:
+        """Получить общее количество логов для пользователя"""
+        result = await self.session.execute(
+            select(func.count())
+            .where(ReportDeliveryLog.user_id == user_id)
+        )
+        return result.scalar_one()
+
+    async def get_user_logs_paginated(
+        self,
+        user_id: UUID,
+        offset: int,
+        limit: int
+    ) -> List[ReportDeliveryLog]:
+        """Получить логи с пагинацией (только данные)"""
+        result = await self.session.execute(
+            select(ReportDeliveryLog)
+            .where(ReportDeliveryLog.user_id == user_id)
+            .order_by(desc(ReportDeliveryLog.delivered_at))
+            .offset(offset)
+            .limit(limit)
+        )
+        return result.scalars().all()

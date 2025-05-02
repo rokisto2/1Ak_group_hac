@@ -1,3 +1,4 @@
+from typing import Optional, List
 from uuid import uuid4
 from datetime import datetime
 from fastapi import HTTPException
@@ -54,6 +55,38 @@ class ReportService:
             raise HTTPException(
                 status_code=500,
                 detail=f"Report generation failed: {str(e)}"
+            )
+
+    async def get_user_reports(
+            self,
+            user_id: uuid4,
+            date_from: Optional[datetime] = None,
+            date_to: Optional[datetime] = None
+    ) -> List[GeneratedReport]:
+        """
+        Получает все отчеты, сгенерированные указанным пользователем
+
+        Args:
+            user_id: UUID пользователя
+            date_from: Начальная дата для фильтрации (опционально)
+            date_to: Конечная дата для фильтрации (опционально)
+
+        Returns:
+            Список объектов GeneratedReport
+
+        Raises:
+            HTTPException: Если произошла ошибка при получении отчетов
+        """
+        try:
+            return await self._repo.get_reports_by_user_id(
+                user_id=user_id,
+                date_from=date_from,
+                date_to=date_to
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to get user reports: {str(e)}"
             )
 
     # TODO remove

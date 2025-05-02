@@ -2,7 +2,6 @@ from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
 import aioboto3
 from botocore.client import BaseClient
-
 from fastapi import Depends, HTTPException
 from starlette import status
 
@@ -112,5 +111,8 @@ async def get_report_repository(
         session: AsyncSession = Depends(get_db_session)
 ) -> ReportRepository:
     return ReportRepository(session)
+
+async def get_report_delivery_log_repository(session: AsyncSession = Depends(get_db_session)) -> ReportDeliveryLogRepository:
+    return ReportDeliveryLogRepository(session)
 
 
