@@ -13,12 +13,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.repositories import ReportRepository, S3StorageRepository, UserRepository
 from db.repositories.report_delivery_log_repository import ReportDeliveryLogRepository
 from db.secret_config import secret_settings
-from utils.email import EmailService
+from services.email_schedule_send import EmailScheduleSend
+from services.scheduler_service import SchedulerService
 
-# Singleton экземпляр сервиса электронной почты
+from utils import EmailService
+
+#  Singleton экземпляр сервиса электронной почты
 _email_service = None
-
-
 async def get_email_service() -> EmailService:
     """
     Получение экземпляра сервиса отправки электронной почты.
@@ -35,6 +36,49 @@ async def get_email_service() -> EmailService:
             token_file=secret_settings.EMAIL_TOKEN_PATH
         )
     return _email_service
+
+# Singleton экземпляр сервиса планировщика
+_scheduler_service = None
+
+async def get_scheduler_service() -> SchedulerService:
+    """
+    Получение экземпляра сервиса планировщика задач.
+
+    Returns:
+        SchedulerService: Сервис планировщика задач
+    """
+    global _scheduler_service
+    if _scheduler_service is None:
+        # Создаем строку подключения из настроек
+        _scheduler_service = SchedulerService.get_instance(db_url_psycopg=settings.DATABASE_URL_psycopg,db_url_asyncpg=settings.DATABASE_URL_asyncpg)
+    return _scheduler_service
+
+_email_scheduler = None
+
+async def get_email_scheduler(
+        scheduler_service: SchedulerService = Depends(get_scheduler_service)
+) -> EmailScheduleSend:
+    """
+    Получение экземпляра планировщика отправки email.
+
+    Args:
+        scheduler_service: Сервис планировщика задач
+
+    Returns:
+        EmailScheduleSend: Планировщик отправки электронной почты
+    """
+    global _email_scheduler
+    if _email_scheduler is None:
+        _email_scheduler = EmailScheduleSend(
+            scheduler_service=scheduler_service,
+            credentials_file=secret_settings.EMAIL_CREDENTIALS_FILE,
+            app_email=secret_settings.EMAIL_APP_ADDRESS,
+            app_name=secret_settings.EMAIL_APP_NAME,
+            token_file=secret_settings.EMAIL_TOKEN_PATH
+        )
+    return _email_scheduler
+
+
 
 async def get_db_session() -> AsyncGenerator[Any, Any]:
     async with async_session_factory() as session:
