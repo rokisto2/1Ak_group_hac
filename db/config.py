@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     POSTGRES_VERSION:str
     POSTGRES_HOST:str
     MINIO_HOST:str
+    TEMP_FILES_DIR:str
 
     @property
     def MINIO_ENDPOINT_URL(self):
