@@ -1,3 +1,4 @@
+import uuid
 from typing import Optional, List
 from uuid import uuid4
 from datetime import datetime
@@ -59,7 +60,7 @@ class ReportService:
 
     async def get_user_reports(
             self,
-            user_id: uuid4,
+            user_id: uuid.UUID,
             date_from: Optional[datetime] = None,
             date_to: Optional[datetime] = None
     ) -> List[GeneratedReport]:
