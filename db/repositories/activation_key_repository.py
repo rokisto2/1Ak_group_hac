@@ -14,7 +14,7 @@ class ActivationKeyRepository:
     async def _generate_unique_key(self) -> str:
         """Генерирует уникальный ключ с проверкой коллизий."""
         while True:
-            key = secrets.token_urlsafe(2)
+            key = secrets.token_urlsafe(7)
             result = await self.session.execute(
                 select(ActivationKey).where(ActivationKey.key == key)
             )
