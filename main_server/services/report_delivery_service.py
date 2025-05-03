@@ -10,6 +10,7 @@ from main_server.db.repositories import ReportDeliveryLogRepository
 from main_server.services.email_schedule_send import EmailScheduleSend
 from main_server.db.secret_config import secret_settings
 
+
 class ReportDeliveryService:
     # main_server/services/report_delivery_service.py
     def __init__(self,
@@ -27,13 +28,63 @@ class ReportDeliveryService:
         self.temp_files_dir = temp_files_dir
         self.report_delivery_log_repository = report_delivery_log_repository
         self.tg_bot_api_url = tg_bot_api_url
-    async def _send_report_via_telegram(self, report_path: str, chat_ids: List[int], report_name: str) -> Dict:
+
+    async def _send_telegram_reports(
+            self,
+            chat_ids: List[int],
+            report_id: UUID,
+            report_name: str,
+            s3_url: str
+    ) -> None:
         """
-        Отправляет отчет через Telegram API бота
+        Асинхронный метод для рассылки отчетов через Telegram
+
+        Args:
+            chat_ids: Список Telegram chat_id получателей
+            report_id: ID отчета
+            report_name: Название отчета
+            s3_url: URL для скачивания файла из miniO
+        """
+        if not chat_ids:
+            return
+
+        try:
+            telegram_result = await self._send_report_via_telegram(
+                report_url=s3_url,
+                chat_ids=chat_ids,
+                report_name=report_name
+            )
+
+            # Логируем результаты отправки
+            db_users = await self.user_repository.get_users_by_chat_ids([str(chat_id) for chat_id in chat_ids])
+
+            for result in telegram_result.get("results", []):
+                try:
+                    status = DeliveryStatusEnum.SENT if result.get("status") == "sent" else DeliveryStatusEnum.FAILED
+                    error_message = result.get("error") if status == DeliveryStatusEnum.FAILED else None
+                    chat_id = str(result.get("chat_id"))
+                    recipient_id = next((user.id for user in db_users if user.chat_id == chat_id), None)
+
+                    if recipient_id:
+                        await self.report_delivery_log_repository.create_log(
+                            recipient_id=recipient_id,
+                            report_id=report_id,
+                            method=DeliveryMethodEnum.TELEGRAM,
+                            status=status,
+                            error_message=error_message
+                        )
+                except Exception as e:
+                    print(f"Ошибка при логировании отправки через Telegram: {str(e)}")
+        except Exception as e:
+            print(f"Ошибка при отправке отчета через Telegram: {str(e)}")
+
+    async def _send_report_via_telegram(self, report_url: str, chat_ids: List[int], report_name: str) -> Dict:
+        """
+        Отправляет отчет через Telegram API бота, используя URL для скачивания
         """
         async with aiohttp.ClientSession() as session:
             payload = {
-                "report_path": report_path,
+                "report_url": report_url,
                 "chat_ids": chat_ids,
                 "report_name": report_name
             }
@@ -96,9 +147,9 @@ class ReportDeliveryService:
 
             for method in methods:
                 if method == DeliveryMethodEnum.EMAIL and user.email:
-                    delivery_groups[method].append((user.email,user.id))
+                    delivery_groups[method].append((user.email, user.id))
                 elif method == DeliveryMethodEnum.TELEGRAM and user.chat_id:
-                    delivery_groups[method].append(user.chat_id)
+                    delivery_groups[method].append(int(user.chat_id))
                 elif method == DeliveryMethodEnum.PLATFORM:
                     delivery_groups[method].append(user.id)
 
@@ -114,43 +165,25 @@ class ReportDeliveryService:
             )
 
         # Отправляем отчет через Telegram
-        if delivery_groups[DeliveryMethodEnum.TELEGRAM] and report and report_file_path:
-            relative_path = report_file_path
+        if delivery_groups[DeliveryMethodEnum.TELEGRAM] and report:
+            # Используем URL для скачивания из miniO вместо локального пути
+            s3_url = report.report_url  # URL для скачивания файла из miniO
 
-            telegram_result = await self._send_report_via_telegram(
-                report_path=relative_path,
+            await self._send_telegram_reports(
                 chat_ids=delivery_groups[DeliveryMethodEnum.TELEGRAM],
-                report_name=report.name if hasattr(report, "name") else f"Отчет #{report_id}"
+                report_id=report_id,
+                report_name=report.name if hasattr(report, "name") else f"Отчет #{report_id}",
+                s3_url=s3_url
             )
-
-            # Логируем результаты отправки
-            for result in telegram_result.get("results", []):
-                try:
-                    status = DeliveryStatusEnum.SENT if result.get("status") == "sent" else DeliveryStatusEnum.FAILED
-                    error_message = result.get("error") if status == DeliveryStatusEnum.FAILED else None
-                    chat_id = str(result.get("chat_id"))
-                    recipient_id = next((user.id for user in db_users if user.chat_id == chat_id), None)
-
-                    if recipient_id:
-                        await self.report_delivery_log_repository.create_log(
-                            recipient_id=recipient_id,
-                            report_id=report_id,
-                            method=DeliveryMethodEnum.TELEGRAM,
-                            status=status,
-                            error_message=error_message
-                        )
-                except Exception as e:
-                    # Для логирования ошибки нужен recipient_id, но в случае ошибки поиска лучше просто записать это в лог
-                    print(f"Ошибка при логировании отправки через Telegram: {str(e)}")
 
         await self._send_messages_platform(delivery_groups[DeliveryMethodEnum.PLATFORM], report_id)
 
     async def _send_messages_platform(self, user_ids: List[UUID], report_id: UUID):
         await self.report_delivery_log_repository.bulk_create_logs(
-            recipient_ids= user_ids,
-            report_id= report_id,
-            method= DeliveryMethodEnum.PLATFORM,
-            status= DeliveryStatusEnum.SENT)
+            recipient_ids=user_ids,
+            report_id=report_id,
+            method=DeliveryMethodEnum.PLATFORM,
+            status=DeliveryStatusEnum.SENT)
 
     async def get_user_delivery_logs(
             self,

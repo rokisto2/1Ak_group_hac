@@ -13,6 +13,9 @@ class SecretSettings(BaseSettings):
 
     TG_BOT_API_URL: str
 
+    FRONTEND_ORIGIN: str
+
+
 
     model_config = SettingsConfigDict(env_file=".env-secret")
 
