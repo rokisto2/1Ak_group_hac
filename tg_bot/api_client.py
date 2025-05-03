@@ -20,6 +20,3 @@ class ApiClient:
                 error_text = await response.text()
                 print(f"Ошибка {response.status}: {error_text}")
                 return None
-
-    async def send_report_notification(self, chat_id: int, report_id: str, report_name: str):
-        pass

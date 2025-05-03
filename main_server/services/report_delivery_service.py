@@ -27,13 +27,14 @@ class ReportDeliveryService:
         self.temp_files_dir = temp_files_dir
         self.report_delivery_log_repository = report_delivery_log_repository
         self.tg_bot_api_url = tg_bot_api_url
-    async def _send_report_via_telegram(self, report_path: str, chat_ids: List[int], report_name: str) -> Dict:
+
+    async def _send_report_via_telegram(self, report_url: str, chat_ids: List[int], report_name: str):
         """
         Отправляет отчет через Telegram API бота
         """
         async with aiohttp.ClientSession() as session:
             payload = {
-                "report_path": report_path,
+                "report_url": report_url,  # Теперь отправляем URL файла в Minio вместо пути
                 "chat_ids": chat_ids,
                 "report_name": report_name
             }
@@ -356,7 +357,7 @@ class ReportDeliveryService:
             relative_path = report_file_path
 
             telegram_result = await self._send_report_via_telegram(
-                report_path=relative_path,
+                report_url=report.report_url,  # URL файла вместо локального пути
                 chat_ids=delivery_groups[DeliveryMethodEnum.TELEGRAM],
                 report_name=report.name if hasattr(report, "name") else f"Отчет #{report_id}"
             )
