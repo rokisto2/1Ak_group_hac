@@ -19,20 +19,21 @@ class UserRepository(BaseRepository):
         )
         return result.scalars().all()
 
-    async def get_user_by_roly(self, role: str = UserRoles.USER, offset: int = 0, limit: int = 10):
-        """Получить пользователей по роли"""
+    async def get_users_by_roles(self, roles: list[str], offset: int = 0, limit: int = 10):
+        """Получить пользователей по списку ролей с сортировкой по ФИО"""
         result = await self.db.execute(
             select(self.model)
-            .where(self.model.user_type == role)
+            .where(self.model.user_type.in_(roles))
+            .order_by(self.model.full_name)
             .offset(offset)
             .limit(limit)
         )
         return result.scalars().all()
 
-    async def get_count_by_role(self, role: str) -> int:
-        """Получить количество пользователей с указанной ролью"""
+    async def get_count_by_roles(self, roles: list[str]) -> int:
+        """Получить количество пользователей с указанными ролями"""
         result = await self.db.execute(
-            select(func.count()).where(User.user_type == role)
+            select(func.count()).where(User.user_type.in_(roles))
         )
         return result.scalar_one()
 
