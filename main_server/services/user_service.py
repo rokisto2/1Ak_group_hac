@@ -1,3 +1,4 @@
+import uuid
 from typing import Dict
 
 from main_server.core import UserRoles
@@ -47,14 +48,14 @@ class UserService:
             }
         }
 
-    async def delete_user(self, user_id: str) -> bool:
+    async def delete_user(self, user_id: uuid.UUID) -> bool:
         """
         Удалить пользователя по ID
 
         :param user_id: ID пользователя
         :return: True, если пользователь успешно удален, иначе False
         """
-        return await self.user_repository.delete(user_id)
+        return await self.user_repository.delete_by_id(user_id)
 
     async def update_user_role(self, user_id, role):
         """

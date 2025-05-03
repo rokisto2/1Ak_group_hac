@@ -33,5 +33,5 @@ class BaseRepository:
 
     async def delete(self, obj):
         """Удалить объект"""
-        self.db.delete(obj)
+        await self.db.delete(obj)
         await self.db.commit()
