@@ -47,3 +47,10 @@ class UserOut(BaseModel):
 class UserPaginationResponse(BaseModel):
     users: List[UserOut]
     pagination: PaginationOut
+
+
+class UserRoleUpdate(BaseModel):
+    role: UserRoles
+
+    class Config:
+        use_enum_values = True
