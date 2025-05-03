@@ -3,12 +3,13 @@ import logging
 from contextlib import asynccontextmanager
 
 import uvicorn
+from aiogram.types import BotCommand
 from fastapi import FastAPI
 from aiogram import Bot
 
 # Импорты из проекта
 from tg_bot.config import bot_settings
-from tg_bot.bot import set_commands, register_handlers
+from tg_bot.handlers import register_handlers
 from aiogram import Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from tg_bot.api.routers import sending_report_router
@@ -22,6 +23,12 @@ bot = Bot(token=bot_settings.BOT_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 
+async def set_commands(bot: Bot):
+    """Установка команд бота"""
+    commands = [
+        BotCommand(command="start", description="Начать работу с ботом")
+    ]
+    await bot.set_my_commands(commands)
 
 # Контекстный менеджер для FastAPI
 @asynccontextmanager
@@ -50,4 +57,4 @@ app.include_router(sending_report_router, prefix="/telegramm-api")
 
 # Запуск сервера
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8001, reload=True)
+    uvicorn.run("tg_bot.bot:app", host="127.0.0.1", port=8001, reload=True)
