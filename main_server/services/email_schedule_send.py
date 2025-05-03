@@ -177,19 +177,19 @@ async def send_registration_email_task(
 ):
     """Асинхронная задача отправки email о регистрации"""
     # Создаем сервис email при выполнении задачи
-    async with EmailService(
-            credentials_file=credentials_file,
-            app_email=app_email,
-            app_name=app_name,
-            token_file=token_file
-    ) as email_service:
-        # Отправляем email используя асинхронный метод
-        return await email_service.send_registration_email(
-            to=email,
-            full_name=full_name,
-            login=login,
-            password=password
-        )
+    email_service = EmailServiceManager.get_service(
+        credentials_file=credentials_file,
+        app_email=app_email,
+        app_name=app_name,
+        token_file=token_file
+    )
+    # Отправляем email используя асинхронный метод
+    return await email_service.send_registration_email(
+        to=email,
+        full_name=full_name,
+        login=login,
+        password=password
+    )
 
 
 @run_async_in_thread
