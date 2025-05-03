@@ -1,5 +1,6 @@
 from fastapi import HTTPException
-from main_server.db import S3StorageRepository
+
+from main_server.db.repositories import S3StorageRepository
 
 
 class S3UrlGenerateService:
