@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import {useState, useEffect} from "react";
 import {
     Box, Heading, Text, Tabs, TabList, Tab, TabPanels, TabPanel,
     Table, Thead, Tbody, Tr, Th, Td, Button, Input, FormControl,
@@ -6,9 +6,9 @@ import {
     Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody,
     ModalFooter, ModalCloseButton, useDisclosure, Flex, Badge
 } from "@chakra-ui/react";
-import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
+import {DeleteIcon, EditIcon} from "@chakra-ui/icons";
 import Navbar from "../components/Navbar";
-import { getApiUrl } from "../utils/api.js";
+import {getApiUrl} from "../utils/api.js";
 
 function ManagerDashboard() {
     const [users, setUsers] = useState([]);
@@ -21,7 +21,7 @@ function ManagerDashboard() {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedRoles, setSelectedRoles] = useState(["user", "superuser"]);
     const toast = useToast();
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const {isOpen, onOpen, onClose} = useDisclosure();
     const [selectedUser, setSelectedUser] = useState(null);
     const [newRole, setNewRole] = useState("");
 
@@ -29,7 +29,6 @@ function ManagerDashboard() {
     const [newUser, setNewUser] = useState({
         email: "",
         full_name: "",
-        password: "",
         role: "user"
     });
 
@@ -91,7 +90,7 @@ function ManagerDashboard() {
             }
 
             // Reset form and refresh list
-            setNewUser({ email: "", full_name: "", password: "", role: "user" });
+            setNewUser({email: "", full_name: "", password: "", role: "user"});
             fetchUsers();
 
             toast({
@@ -163,7 +162,7 @@ function ManagerDashboard() {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("accessToken")}`
                 },
-                body: JSON.stringify({ role: newRole })
+                body: JSON.stringify({role: newRole})
             });
 
             if (!response.ok) throw new Error("Failed to change user role");
@@ -192,7 +191,7 @@ function ManagerDashboard() {
 
     return (
         <Box width="100%" height="100vh" display="flex" flexDirection="column">
-            <Navbar title="Manager Dashboard" />
+            <Navbar title="Manager Dashboard"/>
             <Box p={5} flex="1" overflowY="auto">
                 <Heading mb={4}>Manager Dashboard</Heading>
                 <Text mb={6}>Manage users and their permissions from this dashboard.</Text>
@@ -257,7 +256,11 @@ function ManagerDashboard() {
                                         <FormLabel>Users per page:</FormLabel>
                                         <Select
                                             value={pagination.per_page}
-                                            onChange={(e) => setPagination({...pagination, per_page: Number(e.target.value), page: 1})}
+                                            onChange={(e) => setPagination({
+                                                ...pagination,
+                                                per_page: Number(e.target.value),
+                                                page: 1
+                                            })}
                                         >
                                             <option value={5}>5</option>
                                             <option value={10}>10</option>
@@ -283,7 +286,8 @@ function ManagerDashboard() {
                                             <Td>{user.full_name}</Td>
                                             <Td>{user.email}</Td>
                                             <Td>
-                                                <Badge colorScheme={user.user_type === "superuser" ? "purple" : "green"}>
+                                                <Badge
+                                                    colorScheme={user.user_type === "superuser" ? "purple" : "green"}>
                                                     {user.user_type}
                                                 </Badge>
                                             </Td>
@@ -291,13 +295,13 @@ function ManagerDashboard() {
                                                 <HStack spacing={2}>
                                                     <IconButton
                                                         aria-label="Change role"
-                                                        icon={<EditIcon />}
+                                                        icon={<EditIcon/>}
                                                         size="sm"
                                                         onClick={() => openRoleChangeModal(user)}
                                                     />
                                                     <IconButton
                                                         aria-label="Delete user"
-                                                        icon={<DeleteIcon />}
+                                                        icon={<DeleteIcon/>}
                                                         colorScheme="red"
                                                         size="sm"
                                                         onClick={() => handleDeleteUser(user.id)}
@@ -358,15 +362,6 @@ function ManagerDashboard() {
                                     </FormControl>
 
                                     <FormControl isRequired>
-                                        <FormLabel>Password</FormLabel>
-                                        <Input
-                                            type="password"
-                                            value={newUser.password}
-                                            onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                                        />
-                                    </FormControl>
-
-                                    <FormControl isRequired>
                                         <FormLabel>Role</FormLabel>
                                         <Select
                                             value={newUser.role}
@@ -393,10 +388,10 @@ function ManagerDashboard() {
 
             {/* Role Change Modal */}
             <Modal isOpen={isOpen} onClose={onClose}>
-                <ModalOverlay />
+                <ModalOverlay/>
                 <ModalContent>
                     <ModalHeader>Change User Role</ModalHeader>
-                    <ModalCloseButton />
+                    <ModalCloseButton/>
                     <ModalBody>
                         {selectedUser && (
                             <FormControl>
