@@ -11,6 +11,9 @@ class SecretSettings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    TG_BOT_API_URL: str
+
+
     model_config = SettingsConfigDict(env_file=".env-secret")
 
 

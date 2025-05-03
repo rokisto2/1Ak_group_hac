@@ -8,9 +8,10 @@ from main_server.db.models import ReportDeliveryLog
 from main_server.db.repositories import UserRepository, S3StorageRepository, ReportRepository
 from main_server.db.repositories import ReportDeliveryLogRepository
 from main_server.services.email_schedule_send import EmailScheduleSend
-
+from main_server.db.secret_config import secret_settings
 
 class ReportDeliveryService:
+    # main_server/services/report_delivery_service.py
     def __init__(self,
                  temp_files_dir: str,
                  email_schedule_send: EmailScheduleSend,
@@ -18,8 +19,7 @@ class ReportDeliveryService:
                  s3_storage_repository: S3StorageRepository,
                  report_repository: ReportRepository,
                  report_delivery_log_repository: ReportDeliveryLogRepository,
-                 #TODO: добавтить потом в env файл
-                 tg_bot_api_url: str = "http://127.0.0.1:8001/telegramm-api/start_mailing"):
+                 tg_bot_api_url: str = secret_settings.TG_BOT_API_URL):
         self.user_repository = user_repository
         self.email_schedule_send = email_schedule_send
         self.s3_storage_repository = s3_storage_repository
@@ -27,7 +27,6 @@ class ReportDeliveryService:
         self.temp_files_dir = temp_files_dir
         self.report_delivery_log_repository = report_delivery_log_repository
         self.tg_bot_api_url = tg_bot_api_url
-
     async def _send_report_via_telegram(self, report_path: str, chat_ids: List[int], report_name: str) -> Dict:
         """
         Отправляет отчет через Telegram API бота
@@ -116,10 +115,6 @@ class ReportDeliveryService:
 
         # Отправляем отчет через Telegram
         if delivery_groups[DeliveryMethodEnum.TELEGRAM] and report and report_file_path:
-            # TODO избавится от dictionary
-            user_id_by_chat_id: dict = {user.chat_id: user.id for user in db_users if user.chat_id}
-            # Преобразуем полный путь в относительный для бота
-            # Предполагаем, что бот имеет доступ к временной директории с отчетами
             relative_path = report_file_path
 
             telegram_result = await self._send_report_via_telegram(
@@ -133,24 +128,20 @@ class ReportDeliveryService:
                 try:
                     status = DeliveryStatusEnum.SENT if result.get("status") == "sent" else DeliveryStatusEnum.FAILED
                     error_message = result.get("error") if status == DeliveryStatusEnum.FAILED else None
-                    recipient_id =  user_id_by_chat_id[str(result.get("chat_id"))]
-                    await self.report_delivery_log_repository.create_log(
-                        recipient_id=recipient_id,
-                        report_id=report_id,
-                        method=DeliveryMethodEnum.TELEGRAM,
-                        status=status,
-                        error_message=error_message
-                    )
-                except Exception as e:
-                    # Логируем ошибку ждя каждого получателя
-                    await self.report_delivery_log_repository.create_log(
-                        recipient_id=recipient_id,
-                        report_id=report_id,
-                        method=DeliveryMethodEnum.TELEGRAM,
-                        status=DeliveryStatusEnum.FAILED,
-                        error_message=str(e)
-                    )
+                    chat_id = str(result.get("chat_id"))
+                    recipient_id = next((user.id for user in db_users if user.chat_id == chat_id), None)
 
+                    if recipient_id:
+                        await self.report_delivery_log_repository.create_log(
+                            recipient_id=recipient_id,
+                            report_id=report_id,
+                            method=DeliveryMethodEnum.TELEGRAM,
+                            status=status,
+                            error_message=error_message
+                        )
+                except Exception as e:
+                    # Для логирования ошибки нужен recipient_id, но в случае ошибки поиска лучше просто записать это в лог
+                    print(f"Ошибка при логировании отправки через Telegram: {str(e)}")
 
         await self._send_messages_platform(delivery_groups[DeliveryMethodEnum.PLATFORM], report_id)
 

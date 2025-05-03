@@ -131,9 +131,9 @@ async def get_report_delivery_service(
         user_repository=user_repository,
         s3_storage_repository=s3_storage_repository,
         report_repository=report_repository,
-        report_delivery_log_repository=report_delivery_log_repository
+        report_delivery_log_repository=report_delivery_log_repository,
+        tg_bot_api_url=secret_settings.TG_BOT_API_URL
     )
-
 
 async def get_auth_service(
         session: AsyncSession = Depends(get_db_session),
