@@ -8,16 +8,16 @@ class UserService:
     def __init__(self, user_repository: UserRepository):
         self.user_repository = user_repository
 
-    async def get_users_by_role_with_pagination(
+    async def get_users_by_roles_with_pagination(
             self,
-            role: str = UserRoles.USER,
+            roles: list[str] = [UserRoles.USER],
             page: int = 1,
             per_page: int = 10
     ) -> Dict:
         """
-        Получить пользователей по роли с пагинацией
+        Получить пользователей по списку ролей с пагинацией и сортировкой по ФИО
 
-        :param role: Роль пользователя
+        :param roles: Список ролей пользователей
         :param page: Номер страницы
         :param per_page: Количество записей на странице
         :return: Словарь с пользователями и метаданными пагинации
@@ -26,13 +26,13 @@ class UserService:
             page = 1
         offset = (page - 1) * per_page
 
-        users = await self.user_repository.get_user_by_roly(
-            role=role,
+        users = await self.user_repository.get_users_by_roles(
+            roles=roles,
             offset=offset,
             limit=per_page
         )
 
-        total_count = await self.user_repository.get_count_by_role(role)
+        total_count = await self.user_repository.get_count_by_roles(roles)
         total_pages = (total_count + per_page - 1) // per_page
 
         return {
