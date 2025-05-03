@@ -1,9 +1,13 @@
 from contextlib import asynccontextmanager
+from datetime import datetime
 from typing import Any, AsyncGenerator
 import aioboto3
+import timedelta
 from botocore.client import BaseClient
 from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
 from starlette import status
+from jose import JWTError, jwt
 
 from core.dictionir.ROLE import UserRoles
 from db.config import settings
@@ -15,7 +19,7 @@ from db.secret_config import secret_settings
 from services import ReportDeliveryService, AuthService
 from services.email_schedule_send import EmailScheduleSend
 from services.scheduler_service import SchedulerService
-
+from uuid import UUID
 from utils import EmailService
 
 #  Singleton экземпляр сервиса электронной почты
@@ -141,4 +145,86 @@ async def get_auth_service(
         session=session,
         email_schedule_send=email_schedule_send
     )
+
+from db.secret_config import secret_settings
+
+# Используем настройки JWT
+SECRET_KEY = secret_settings.SECRET_KEY
+ALGORITHM = secret_settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = secret_settings.ACCESS_TOKEN_EXPIRE_MINUTES
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+async def get_current_user(
+        token: str = Depends(oauth2_scheme),
+        auth_service: AuthService = Depends(get_auth_service)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Недействительные учетные данные",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    user = await auth_service.user_repo.get(UUID(user_id))
+    if user is None:
+        raise credentials_exception
+    return user
+
+
+async def get_admin_user(user=Depends(get_current_user)):
+    """
+    Проверка, что текущий пользователь имеет права суперпользователя.
+
+    Args:
+        user: Текущий пользователь
+
+    Returns:
+        User: Пользователь с правами суперпользователя
+
+    Raises:
+        HTTPException: Если у пользователя недостаточно прав
+    """
+    if user.user_type != UserRoles.SUPERUSER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Недостаточно прав доступа"
+        )
+    return user
+
+
+async def get_manager_user(user=Depends(get_current_user)):
+    """
+    Проверка, что текущий пользователь имеет права менеджера.
+
+    Args:
+        user: Текущий пользователь
+
+    Returns:
+        User: Пользователь с правами менеджера
+
+    Raises:
+        HTTPException: Если у пользователя недостаточно прав
+    """
+    if user.user_type != UserRoles.MANAGER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Недостаточно прав доступа"
+        )
+    return user
 

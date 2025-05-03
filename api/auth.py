@@ -11,11 +11,13 @@ from core.dictionir.ROLE import UserRoles
 from schemas.user import (PasswordChange, TelegramBind, UserCreate, Token)
 from services import AuthService
 
-# Настройки JWT
-# TODO: Добавить потом чтение SECRET_KEY из env
-SECRET_KEY = "11111"  # В реальном проекте брать из настроек
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from db.secret_config import secret_settings
+jwt_settings = secret_settings
+from core.dependencies import get_current_user, get_manager_user, create_access_token
+# Используем настройки JWT
+SECRET_KEY = jwt_settings.SECRET_KEY
+ALGORITHM = jwt_settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = jwt_settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
@@ -36,35 +38,6 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     return encoded_jwt
 
 
-async def get_current_user(
-        token: str = Depends(oauth2_scheme),
-        auth_service: AuthService = Depends(get_auth_service)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Недействительные учетные данные",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-
-    user = await auth_service.user_repo.get(UUID(user_id))
-    if user is None:
-        raise credentials_exception
-    return user
-
-
-async def get_admin_user(user=Depends(get_current_user)):
-    if user.user_type not in [UserRoles.SUPERUSER, UserRoles.MANAGER]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Недостаточно прав доступа"
-        )
-    return user
 
 
 # Эндпоинты
@@ -91,7 +64,7 @@ async def login(
 async def register_user(
         user_data: UserCreate,
         auth_service: AuthService = Depends(get_auth_service),
-        admin_user=Depends(get_admin_user)
+        admin_user=Depends(get_manager_user)
 ):
     user = await auth_service.register_user(
         email=user_data.email,
@@ -135,27 +108,18 @@ async def change_password(
     return {"success": result}
 
 
-@router.post("/init-superuser", status_code=status.HTTP_201_CREATED)
-async def init_superuser(
+@router.post("/init-manager", status_code=status.HTTP_201_CREATED)
+async def init_manager(
         user_data: UserCreate,
         db: AsyncSession = Depends(get_db_session),
         auth_service: AuthService = Depends(get_auth_service)
 ):
-    # Проверяем, что в системе еще нет суперпользователей
-    superusers = await auth_service.user_repo.get_superusers()
-
-    # if superusers:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_400_BAD_REQUEST,
-    #         detail="Суперпользователь уже существует"
-    #     )
-
-    # Создаем суперпользователя
+    # Создаем менеджера
     user = await auth_service.register_user(
         email=user_data.email,
         full_name=user_data.full_name,
         password=user_data.password,
-        role=UserRoles.SUPERUSER
+        role=UserRoles.MANAGER
     )
 
     return {"id": user.id, "email": user.email, "role": user.user_type}

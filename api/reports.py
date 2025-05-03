@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api import auth
-from api.auth import get_admin_user, get_current_user
+from api.auth import get_manager_user, get_current_user
 from db.enums import DeliveryMethodEnum
 from db.models import User, GeneratedReport
 from services import ReportDeliveryService
