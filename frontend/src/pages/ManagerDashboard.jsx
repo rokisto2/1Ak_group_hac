@@ -206,9 +206,13 @@ function ManagerDashboard() {
                                 borderBottom: "none",
                                 fontWeight: "bold"
                             }}
-                            mx="1px"  // Add slight margin between tabs
-                            px={6}    // Add consistent horizontal padding
-                            py={3}    // Add consistent vertical padding
+                            _focus={{
+                                outline: "none",
+                                boxShadow: "none"
+                            }}
+                            mx="1px"
+                            px={6}
+                            py={3}
                         >
                             User List
                         </Tab>
@@ -219,9 +223,13 @@ function ManagerDashboard() {
                                 borderBottom: "none",
                                 fontWeight: "bold"
                             }}
-                            mx="1px"  // Add slight margin between tabs
-                            px={6}    // Add consistent horizontal padding
-                            py={3}    // Add consistent vertical padding
+                            _focus={{
+                                outline: "none",
+                                boxShadow: "none"
+                            }}
+                            mx="1px"
+                            px={6}
+                            py={3}
                         >
                             Create User
                         </Tab>
