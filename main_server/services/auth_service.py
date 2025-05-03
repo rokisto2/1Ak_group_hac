@@ -46,9 +46,6 @@ class AuthService:
         # Генерация пароля, если не указан
         if not password:
             password = self._generate_password()
-            send_password = True
-        else:
-            send_password = False
 
         # Хеширование пароля
         password_hash = pwd_ctx.hash(password)
@@ -62,13 +59,13 @@ class AuthService:
         )
 
 
-        if send_password:
-            await self.email_schedule_send.schedule_registration_email(
-                email= email,
-                full_name= full_name,
-                login=email,
-                password=password
-            )
+        # if send_password:
+        await self.email_schedule_send.schedule_registration_email(
+            email= email,
+            full_name= full_name,
+            login=email,
+            password=password
+        )
 
         return user
 
