@@ -7,7 +7,7 @@ from jose import jwt
 
 from main_server.core.dependencies import get_db_session, get_auth_service
 from main_server.core.dictionir.ROLE import UserRoles
-from main_server.api.schemas.user import (PasswordChange, TelegramBind, UserCreate, Token)
+from main_server.api.schemas.user import (PasswordChange, TelegramBind, UserCreate, Token, UserCreateWithoutPassword)
 from main_server.services import AuthService
 
 from main_server.db.secret_config import secret_settings
@@ -61,14 +61,14 @@ async def login(
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_user(
-        user_data: UserCreate,
+        user_data: UserCreateWithoutPassword,
         auth_service: AuthService = Depends(get_auth_service),
         admin_user=Depends(get_manager_user)
 ):
     user = await auth_service.register_user(
         email=user_data.email,
         full_name=user_data.full_name,
-        password=user_data.password,
+        password=None,
         role=user_data.role
     )
     return {"id": user.id, "email": user.email, "role": user.user_type}

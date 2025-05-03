@@ -24,6 +24,11 @@ class UserCreate(BaseModel):
     password: Optional[str] = None
     role: str = UserRoles.USER
 
+class UserCreateWithoutPassword(BaseModel):
+    email: EmailStr
+    full_name: str
+    role: UserRoles = UserRoles.USER
+
 
 class PasswordChange(BaseModel):
     old_password: str

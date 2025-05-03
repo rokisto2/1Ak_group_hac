@@ -124,3 +124,11 @@ class UserRepository(BaseRepository):
         await self.db.refresh(user)
         return user
 
+    async def delete_by_id(self, user_id: UUID) -> bool:
+        """Удалить пользователя по ID"""
+        user = await self.get(user_id)
+        if not user:
+            return False
+        await self.db.delete(user)
+        await self.db.commit()
+        return True
