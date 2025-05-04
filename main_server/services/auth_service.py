@@ -79,6 +79,22 @@ class AuthService:
             )
         return user
 
+    async def check_telegram_binding(self, user_id: UUID) -> tuple[bool, Optional[User]]:
+        """
+        Проверяет привязан ли аккаунт пользователя к телеграм-боту
+
+        Args:
+            user_id: ID пользователя
+
+        Returns:
+            Кортеж (статус привязки, chat_id телеграма)
+        """
+        user = await self.user_repo.get(user_id)
+        if not user:
+            return False,None
+
+        return user.chat_id is not None, user
+
     async def generate_telegram_key(self, user_id: UUID, expires_hours: int = 24):
         """Генерирует ключ для привязки Telegram аккаунта"""
         # Получение пользователя

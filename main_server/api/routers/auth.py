@@ -91,6 +91,32 @@ async def bind_telegram(
     return {"success": True, "user_id": user_id}
 
 
+from fastapi import HTTPException, status
+
+
+@router.get("/telegram/is-bound", response_model=dict)
+async def check_telegram_binding(
+        auth_service: AuthService = Depends(get_auth_service),
+        current_user=Depends(get_current_user)
+):
+    """
+    Проверка наличия привязки аккаунта к Telegram боту
+
+    Возвращает информацию о статусе привязки
+    """
+    is_bound, user = await auth_service.check_telegram_binding(current_user.id)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Пользователь не найден"
+        )
+
+    return {
+        "is_bound": is_bound
+    }
+
+
 @router.post("/password/change")
 async def change_password(
         data: PasswordChange,
