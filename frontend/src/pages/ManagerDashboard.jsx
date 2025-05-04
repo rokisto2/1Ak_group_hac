@@ -4,9 +4,10 @@ import {
     Table, Thead, Tbody, Tr, Th, Td, Button, Input, FormControl,
     FormLabel, Select, Stack, useToast, HStack, IconButton,
     Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody,
-    ModalFooter, ModalCloseButton, useDisclosure, Flex, Badge
+    ModalFooter, ModalCloseButton, useDisclosure, Flex, Badge,
+    Tooltip
 } from "@chakra-ui/react";
-import {EditIcon, LockIcon, UnlockIcon} from "@chakra-ui/icons";
+import {EditIcon, LockIcon, RepeatIcon, UnlockIcon} from "@chakra-ui/icons";
 import Navbar from "../components/Navbar";
 import {getApiUrl} from "../utils/api.js";
 
@@ -20,9 +21,15 @@ function ManagerDashboard() {
     });
     const [isLoading, setIsLoading] = useState(false);
     const toast = useToast();
-    const {isOpen, onOpen, onClose} = useDisclosure();
-    const [selectedUser, setSelectedUser] = useState(null);
     const [newRole, setNewRole] = useState("");
+    const {isOpen, onOpen, onClose} = useDisclosure();
+    const {
+        isOpen: isResetPasswordOpen,
+        onOpen: onResetPasswordOpen,
+        onClose: onResetPasswordClose
+    } = useDisclosure();
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [userForPasswordReset, setUserForPasswordReset] = useState(null);
 
     // User registration form state
     const [newUser, setNewUser] = useState({
@@ -67,6 +74,12 @@ function ManagerDashboard() {
         fetchUsers();
     }, [pagination.page, pagination.per_page]);
 
+
+    const openResetPasswordModal = (user) => {
+        setUserForPasswordReset(user);
+        onResetPasswordOpen();
+    };
+
     // Handle user creation
     const handleCreateUser = async (e) => {
         e.preventDefault();
@@ -108,6 +121,41 @@ function ManagerDashboard() {
             });
         } finally {
             setIsLoading(false);
+        }
+    };
+
+
+    // функцию сброса пароля
+    const handleResetPassword = async () => {
+        try {
+            const response = await fetch(getApiUrl('/auth/password/reset'), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+                },
+                body: JSON.stringify({ user_id: userForPasswordReset.id })
+            });
+
+            if (!response.ok) throw new Error("Не удалось сбросить пароль");
+
+            onResetPasswordClose();
+
+            toast({
+                title: "Пароль сброшен",
+                description: "Новый пароль отправлен на почту пользователя",
+                status: "success",
+                duration: 3000,
+                isClosable: true
+            });
+        } catch (error) {
+            toast({
+                title: "Ошибка",
+                description: error.message,
+                status: "error",
+                duration: 3000,
+                isClosable: true
+            });
         }
     };
 
@@ -242,7 +290,7 @@ function ManagerDashboard() {
                         <TabPanel>
                             <Box mb={4}>
                                 <HStack spacing={4} mb={4}>
-                                    <FormControl>
+                                    <FormControl maxW="250px">
                                         <FormLabel>Пользователей на странице:</FormLabel>
                                         <Select
                                             value={pagination.per_page}
@@ -294,19 +342,32 @@ function ManagerDashboard() {
                                             </Td>
                                             <Td>
                                                 <HStack spacing={2}>
-                                                    <IconButton
-                                                        aria-label="Изменить роль"
-                                                        icon={<EditIcon/>}
-                                                        size="sm"
-                                                        onClick={() => openRoleChangeModal(user)}
-                                                    />
-                                                    <IconButton
-                                                        aria-label={user.is_banned ? "Разблокировать" : "Заблокировать"}
-                                                        icon={user.is_banned ? <UnlockIcon/> : <LockIcon/>}
-                                                        colorScheme={user.is_banned ? "green" : "red"}
-                                                        size="sm"
-                                                        onClick={() => handleToggleBanStatus(user.id, user.is_banned)}
-                                                    />
+                                                    <Tooltip label="Изменить роль" hasArrow>
+                                                        <IconButton
+                                                            aria-label="Изменить роль"
+                                                            icon={<EditIcon/>}
+                                                            size="sm"
+                                                            onClick={() => openRoleChangeModal(user)}
+                                                        />
+                                                    </Tooltip>
+                                                    <Tooltip label={user.is_banned ? "Разблокировать" : "Заблокировать"} hasArrow>
+                                                        <IconButton
+                                                            aria-label={user.is_banned ? "Разблокировать" : "Заблокировать"}
+                                                            icon={user.is_banned ? <UnlockIcon/> : <LockIcon/>}
+                                                            colorScheme={user.is_banned ? "green" : "red"}
+                                                            size="sm"
+                                                            onClick={() => handleToggleBanStatus(user.id, user.is_banned)}
+                                                        />
+                                                    </Tooltip>
+                                                    <Tooltip label="Сбросить пароль" hasArrow>
+                                                        <IconButton
+                                                            aria-label="Сбросить пароль"
+                                                            icon={<RepeatIcon/>}
+                                                            colorScheme="orange"
+                                                            size="sm"
+                                                            onClick={() => openResetPasswordModal(user)}
+                                                        />
+                                                    </Tooltip>
                                                 </HStack>
                                             </Td>
                                         </Tr>
@@ -412,6 +473,30 @@ function ManagerDashboard() {
                             Сохранить
                         </Button>
                         <Button variant="ghost" onClick={onClose}>Отмена</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+
+
+            {/* Модальное окно подтверждения сброса пароля */}
+            <Modal isOpen={isResetPasswordOpen} onClose={onResetPasswordClose}>
+                <ModalOverlay/>
+                <ModalContent>
+                    <ModalHeader>Подтверждение сброса пароля</ModalHeader>
+                    <ModalCloseButton/>
+                    <ModalBody>
+                        {userForPasswordReset && (
+                            <Text>
+                                Вы уверены, что хотите сбросить пароль для пользователя <b>{userForPasswordReset.full_name}</b>?
+                                Новый пароль будет отправлен на email: <b>{userForPasswordReset.email}</b>.
+                            </Text>
+                        )}
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button colorScheme="red" mr={3} onClick={handleResetPassword}>
+                            Сбросить пароль
+                        </Button>
+                        <Button variant="ghost" onClick={onResetPasswordClose}>Отмена</Button>
                     </ModalFooter>
                 </ModalContent>
             </Modal>
