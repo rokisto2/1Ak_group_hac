@@ -29,6 +29,8 @@ class UserCreateWithoutPassword(BaseModel):
     full_name: str
     role: UserRoles = UserRoles.USER
 
+class UserBanUpdate(BaseModel):
+    is_banned: bool
 
 class PasswordChange(BaseModel):
     old_password: str
@@ -51,6 +53,20 @@ class UserOut(BaseModel):
 
 class UserPaginationResponse(BaseModel):
     users: List[UserOut]
+    pagination: PaginationOut
+
+class FullIndoUserOut(BaseModel):
+    id: uuid.UUID  # Используем UUID тип напрямую
+    full_name: str
+    email: str
+    user_type: str
+    is_banned: bool
+
+    class Config:
+        from_attributes = True
+
+class AllUserPaginationResponse(BaseModel):
+    users: List[FullIndoUserOut]
     pagination: PaginationOut
 
 

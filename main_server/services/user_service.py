@@ -13,11 +13,13 @@ class UserService:
             self,
             roles: list[str] = [UserRoles.USER],
             page: int = 1,
-            per_page: int = 10
+            per_page: int = 10,
+            is_banned: bool = False
     ) -> Dict:
         """
         Получить пользователей по списку ролей с пагинацией и сортировкой по ФИО
 
+        :param is_banned:
         :param roles: Список ролей пользователей
         :param page: Номер страницы
         :param per_page: Количество записей на странице
@@ -30,10 +32,11 @@ class UserService:
         users = await self.user_repository.get_users_by_roles(
             roles=roles,
             offset=offset,
-            limit=per_page
+            limit=per_page,
+            is_banned=is_banned
         )
 
-        total_count = await self.user_repository.get_count_by_roles(roles)
+        total_count = await self.user_repository.get_count_by_roles(roles, is_banned=is_banned)
         total_pages = (total_count + per_page - 1) // per_page
 
         return {
@@ -48,14 +51,14 @@ class UserService:
             }
         }
 
-    async def delete_user(self, user_id: uuid.UUID) -> bool:
+    async def set_status_ban(self, user_id: uuid.UUID, is_banned: bool):
         """
-        Удалить пользователя по ID
-
+        Установить статус бана для пользователя
         :param user_id: ID пользователя
-        :return: True, если пользователь успешно удален, иначе False
+        :param is_banned: True, если пользователь забанен, иначе False
+        :return: True, если статус успешно изменен, иначе False
         """
-        return await self.user_repository.delete_by_id(user_id)
+        return await self.user_repository.update_with_banned_user_info(user_id,is_banned = is_banned)
 
     async def update_user_role(self, user_id, role):
         """
