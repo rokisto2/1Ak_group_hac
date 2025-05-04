@@ -22,8 +22,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 
-# Pydantic модели
-
 
 # Вспомогательные функции
 def create_access_token(data: dict, expires_delta: timedelta = None):
@@ -107,18 +105,3 @@ async def change_password(
     return {"success": result}
 
 
-@router.post("/init-manager", status_code=status.HTTP_201_CREATED)
-async def init_manager(
-        user_data: UserCreate,
-        db: AsyncSession = Depends(get_db_session),
-        auth_service: AuthService = Depends(get_auth_service)
-):
-    # Создаем менеджера
-    user = await auth_service.register_user(
-        email=user_data.email,
-        full_name=user_data.full_name,
-        password=user_data.password,
-        role=UserRoles.MANAGER
-    )
-
-    return {"id": user.id, "email": user.email, "role": user.user_type}
