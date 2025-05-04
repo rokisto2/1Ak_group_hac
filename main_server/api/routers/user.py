@@ -12,7 +12,7 @@ from main_server.api.schemas.user import UserRoleUpdate
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get("/all-users", response_model=AllUserPaginationResponse)
+@router.get("/all", response_model=AllUserPaginationResponse)
 async def get_all_users_including_banned(
         page: int = Query(default=1, ge=1, description="Номер страницы"),
         per_page: int = Query(default=10, le=100, description="Количество на странице"),

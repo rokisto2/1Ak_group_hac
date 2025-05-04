@@ -6,7 +6,7 @@ import {
     Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody,
     ModalFooter, ModalCloseButton, useDisclosure, Flex, Badge
 } from "@chakra-ui/react";
-import {DeleteIcon, EditIcon} from "@chakra-ui/icons";
+import {EditIcon, LockIcon, UnlockIcon} from "@chakra-ui/icons";
 import Navbar from "../components/Navbar";
 import {getApiUrl} from "../utils/api.js";
 
@@ -19,7 +19,6 @@ function ManagerDashboard() {
         total_pages: 0
     });
     const [isLoading, setIsLoading] = useState(false);
-    const [selectedRoles, setSelectedRoles] = useState(["user", "superuser"]);
     const toast = useToast();
     const {isOpen, onOpen, onClose} = useDisclosure();
     const [selectedUser, setSelectedUser] = useState(null);
@@ -36,9 +35,8 @@ function ManagerDashboard() {
     const fetchUsers = async () => {
         setIsLoading(true);
         try {
-            const rolesQuery = selectedRoles.map(role => `roles=${role}`).join("&");
             const response = await fetch(
-                getApiUrl(`/users/?${rolesQuery}&page=${pagination.page}&per_page=${pagination.per_page}`),
+                getApiUrl(`/users/all?page=${pagination.page}&per_page=${pagination.per_page}`),
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("accessToken")}`
@@ -46,14 +44,14 @@ function ManagerDashboard() {
                 }
             );
 
-            if (!response.ok) throw new Error("Failed to fetch users");
+            if (!response.ok) throw new Error("Не удалось получить список пользователей");
 
             const data = await response.json();
             setUsers(data.users);
             setPagination(data.pagination);
         } catch (error) {
             toast({
-                title: "Error",
+                title: "Ошибка",
                 description: error.message,
                 status: "error",
                 duration: 3000,
@@ -64,10 +62,10 @@ function ManagerDashboard() {
         }
     };
 
-    // Load users on component mount and when pagination or filters change
+    // Load users on component mount and when pagination changes
     useEffect(() => {
         fetchUsers();
-    }, [pagination.page, pagination.per_page, selectedRoles]);
+    }, [pagination.page, pagination.per_page]);
 
     // Handle user creation
     const handleCreateUser = async (e) => {
@@ -86,7 +84,7 @@ function ManagerDashboard() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.detail || "Failed to create user");
+                throw new Error(errorData.detail || "Не удалось создать пользователя");
             }
 
             // Reset form and refresh list
@@ -94,15 +92,15 @@ function ManagerDashboard() {
             fetchUsers();
 
             toast({
-                title: "User created",
-                description: "New user has been successfully created",
+                title: "Пользователь создан",
+                description: "Новый пользователь успешно создан",
                 status: "success",
                 duration: 3000,
                 isClosable: true
             });
         } catch (error) {
             toast({
-                title: "Error creating user",
+                title: "Ошибка создания пользователя",
                 description: error.message,
                 status: "error",
                 duration: 3000,
@@ -113,31 +111,37 @@ function ManagerDashboard() {
         }
     };
 
-    // Handle user deletion
-    const handleDeleteUser = async (userId) => {
+    // Handle user ban/unban
+    const handleToggleBanStatus = async (userId, currentBanStatus) => {
         try {
-            const response = await fetch(getApiUrl(`/users/${userId}`), {
-                method: "DELETE",
+            const response = await fetch(getApiUrl(`/users/${userId}/ban-status`), {
+                method: "PUT",
                 headers: {
+                    "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("accessToken")}`
-                }
+                },
+                body: JSON.stringify({
+                    is_banned: !currentBanStatus
+                })
             });
 
-            if (!response.ok) throw new Error("Failed to delete user");
+            if (!response.ok) throw new Error("Не удалось изменить статус пользователя");
 
             // Refresh user list
             fetchUsers();
 
             toast({
-                title: "User deleted",
-                description: "User has been successfully deleted",
+                title: currentBanStatus ? "Пользователь разблокирован" : "Пользователь заблокирован",
+                description: currentBanStatus
+                    ? "Пользователь успешно разблокирован"
+                    : "Пользователь успешно заблокирован",
                 status: "success",
                 duration: 3000,
                 isClosable: true
             });
         } catch (error) {
             toast({
-                title: "Error",
+                title: "Ошибка",
                 description: error.message,
                 status: "error",
                 duration: 3000,
@@ -157,7 +161,7 @@ function ManagerDashboard() {
     const handleRoleChange = async () => {
         try {
             const response = await fetch(getApiUrl(`/users/${selectedUser.id}/role`), {
-                method: "PUT", // Change from PATCH to PUT to match backend
+                method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("accessToken")}`
@@ -165,22 +169,22 @@ function ManagerDashboard() {
                 body: JSON.stringify({role: newRole})
             });
 
-            if (!response.ok) throw new Error("Failed to change user role");
+            if (!response.ok) throw new Error("Не удалось изменить роль пользователя");
 
             // Refresh user list and close modal
             fetchUsers();
             onClose();
 
             toast({
-                title: "Role updated",
-                description: `User role changed to ${newRole}`,
+                title: "Роль обновлена",
+                description: `Роль пользователя изменена на ${newRole}`,
                 status: "success",
                 duration: 3000,
                 isClosable: true
             });
         } catch (error) {
             toast({
-                title: "Error",
+                title: "Ошибка",
                 description: error.message,
                 status: "error",
                 duration: 3000,
@@ -191,10 +195,10 @@ function ManagerDashboard() {
 
     return (
         <Box width="100%" height="100vh" display="flex" flexDirection="column">
-            <Navbar title="Manager Dashboard"/>
+            <Navbar title="Панель менеджера"/>
             <Box p={5} flex="1" overflowY="auto">
-                <Heading mb={4}>Manager Dashboard</Heading>
-                <Text mb={6}>Manage users and their permissions from this dashboard.</Text>
+                <Heading mb={4}>Панель менеджера</Heading>
+                <Text mb={6}>Управление пользователями и их правами доступа.</Text>
 
                 <Tabs isFitted variant="enclosed">
                     <TabList mb="1em">
@@ -213,7 +217,7 @@ function ManagerDashboard() {
                             px={6}
                             py={3}
                         >
-                            User List
+                            Список пользователей
                         </Tab>
                         <Tab
                             _selected={{
@@ -230,7 +234,7 @@ function ManagerDashboard() {
                             px={6}
                             py={3}
                         >
-                            Create User
+                            Создать пользователя
                         </Tab>
                     </TabList>
                     <TabPanels>
@@ -239,21 +243,7 @@ function ManagerDashboard() {
                             <Box mb={4}>
                                 <HStack spacing={4} mb={4}>
                                     <FormControl>
-                                        <FormLabel>Filter by role:</FormLabel>
-                                        <Select
-                                            value={selectedRoles.join(",")}
-                                            onChange={(e) => {
-                                                const values = e.target.value ? e.target.value.split(",") : [];
-                                                setSelectedRoles(values);
-                                            }}
-                                        >
-                                            <option value="user,superuser">All roles</option>
-                                            <option value="user">User only</option>
-                                            <option value="superuser">Superuser only</option>
-                                        </Select>
-                                    </FormControl>
-                                    <FormControl>
-                                        <FormLabel>Users per page:</FormLabel>
+                                        <FormLabel>Пользователей на странице:</FormLabel>
                                         <Select
                                             value={pagination.per_page}
                                             onChange={(e) => setPagination({
@@ -274,10 +264,11 @@ function ManagerDashboard() {
                             <Table variant="simple">
                                 <Thead>
                                     <Tr>
-                                        <Th>Name</Th>
+                                        <Th>Имя</Th>
                                         <Th>Email</Th>
-                                        <Th>Role</Th>
-                                        <Th>Actions</Th>
+                                        <Th>Роль</Th>
+                                        <Th>Статус</Th>
+                                        <Th>Действия</Th>
                                     </Tr>
                                 </Thead>
                                 <Tbody>
@@ -292,19 +283,29 @@ function ManagerDashboard() {
                                                 </Badge>
                                             </Td>
                                             <Td>
+                                                <Badge
+                                                    colorScheme={user.is_banned ? "red" : "green"}
+                                                    minWidth="110px"
+                                                    textAlign="center"
+                                                    display="block"
+                                                >
+                                                    {user.is_banned ? "Заблокирован" : "Активен"}
+                                                </Badge>
+                                            </Td>
+                                            <Td>
                                                 <HStack spacing={2}>
                                                     <IconButton
-                                                        aria-label="Change role"
+                                                        aria-label="Изменить роль"
                                                         icon={<EditIcon/>}
                                                         size="sm"
                                                         onClick={() => openRoleChangeModal(user)}
                                                     />
                                                     <IconButton
-                                                        aria-label="Delete user"
-                                                        icon={<DeleteIcon/>}
-                                                        colorScheme="red"
+                                                        aria-label={user.is_banned ? "Разблокировать" : "Заблокировать"}
+                                                        icon={user.is_banned ? <UnlockIcon/> : <LockIcon/>}
+                                                        colorScheme={user.is_banned ? "green" : "red"}
                                                         size="sm"
-                                                        onClick={() => handleDeleteUser(user.id)}
+                                                        onClick={() => handleToggleBanStatus(user.id, user.is_banned)}
                                                     />
                                                 </HStack>
                                             </Td>
@@ -316,7 +317,7 @@ function ManagerDashboard() {
                             {/* Pagination controls */}
                             <Flex justifyContent="space-between" mt={4}>
                                 <Text>
-                                    Showing {users.length} of {pagination.total} users
+                                    Показано {users.length} из {pagination.total} пользователей
                                 </Text>
                                 <HStack spacing={2}>
                                     <Button
@@ -324,17 +325,17 @@ function ManagerDashboard() {
                                         onClick={() => setPagination({...pagination, page: pagination.page - 1})}
                                         isDisabled={!pagination.has_prev || isLoading}
                                     >
-                                        Previous
+                                        Предыдущая
                                     </Button>
                                     <Text>
-                                        Page {pagination.page} of {pagination.total_pages}
+                                        Страница {pagination.page} из {pagination.total_pages}
                                     </Text>
                                     <Button
                                         size="sm"
                                         onClick={() => setPagination({...pagination, page: pagination.page + 1})}
                                         isDisabled={!pagination.has_next || isLoading}
                                     >
-                                        Next
+                                        Следующая
                                     </Button>
                                 </HStack>
                             </Flex>
@@ -354,7 +355,7 @@ function ManagerDashboard() {
                                     </FormControl>
 
                                     <FormControl isRequired>
-                                        <FormLabel>Full Name</FormLabel>
+                                        <FormLabel>Полное имя</FormLabel>
                                         <Input
                                             value={newUser.full_name}
                                             onChange={(e) => setNewUser({...newUser, full_name: e.target.value})}
@@ -362,13 +363,13 @@ function ManagerDashboard() {
                                     </FormControl>
 
                                     <FormControl isRequired>
-                                        <FormLabel>Role</FormLabel>
+                                        <FormLabel>Роль</FormLabel>
                                         <Select
                                             value={newUser.role}
                                             onChange={(e) => setNewUser({...newUser, role: e.target.value})}
                                         >
-                                            <option value="user">User</option>
-                                            <option value="superuser">Superuser</option>
+                                            <option value="user">Пользователь</option>
+                                            <option value="superuser">Суперпользователь</option>
                                         </Select>
                                     </FormControl>
 
@@ -377,7 +378,7 @@ function ManagerDashboard() {
                                         colorScheme="blue"
                                         isLoading={isLoading}
                                     >
-                                        Create User
+                                        Создать пользователя
                                     </Button>
                                 </Stack>
                             </Box>
@@ -390,27 +391,27 @@ function ManagerDashboard() {
             <Modal isOpen={isOpen} onClose={onClose}>
                 <ModalOverlay/>
                 <ModalContent>
-                    <ModalHeader>Change User Role</ModalHeader>
+                    <ModalHeader>Изменить роль пользователя</ModalHeader>
                     <ModalCloseButton/>
                     <ModalBody>
                         {selectedUser && (
                             <FormControl>
-                                <FormLabel>Role for {selectedUser.full_name}</FormLabel>
+                                <FormLabel>Роль для {selectedUser.full_name}</FormLabel>
                                 <Select
                                     value={newRole}
                                     onChange={(e) => setNewRole(e.target.value)}
                                 >
-                                    <option value="user">User</option>
-                                    <option value="superuser">Superuser</option>
+                                    <option value="user">Пользователь</option>
+                                    <option value="superuser">Суперпользователь</option>
                                 </Select>
                             </FormControl>
                         )}
                     </ModalBody>
                     <ModalFooter>
                         <Button colorScheme="blue" mr={3} onClick={handleRoleChange}>
-                            Save
+                            Сохранить
                         </Button>
-                        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                        <Button variant="ghost" onClick={onClose}>Отмена</Button>
                     </ModalFooter>
                 </ModalContent>
             </Modal>
