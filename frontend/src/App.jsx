@@ -6,6 +6,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
+import SendReport from "./pages/SendReport";
 
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+                <Route path="/send-report/:reportId" element={<SendReport />} />
 
                 {/* Redirect root to login page */}
                 <Route path="/" element={<Navigate to="/login" />} />
