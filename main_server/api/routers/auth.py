@@ -7,7 +7,8 @@ from jose import jwt
 
 from main_server.core.dependencies import get_db_session, get_auth_service
 from main_server.core.dictionir.ROLE import UserRoles
-from main_server.api.schemas.user import (PasswordChange, TelegramBind, UserCreate, Token, UserCreateWithoutPassword)
+from main_server.api.schemas.user import (PasswordChange, TelegramBind, UserCreate, Token, UserCreateWithoutPassword,
+                                          UserPasswordReset)
 from main_server.services import AuthService
 
 from main_server.db.secret_config import secret_settings
@@ -116,6 +117,19 @@ async def check_telegram_binding(
         "is_bound": is_bound
     }
 
+@router.post("/password/reset")
+async def reset_password(
+        reset_data: UserPasswordReset,
+        auth_service: AuthService = Depends(get_auth_service),
+        admin_user=Depends(get_manager_user)  # Только для менеджеров
+):
+    """
+    Сбрасывает пароль пользователя и отправляет новый на почту.
+
+    Доступно только для пользователей с правами менеджера.
+    """
+    result = await auth_service.reset_password(reset_data.user_id)
+    return {"success": result, "message": "Новый пароль сгенерирован и отправлен на почту"}
 
 @router.post("/password/change")
 async def change_password(
