@@ -7,7 +7,8 @@ from jose import jwt
 
 from main_server.core.dependencies import get_db_session, get_auth_service
 from main_server.core.dictionir.ROLE import UserRoles
-from main_server.api.schemas.user import (PasswordChange, TelegramBind, UserCreate, Token, UserCreateWithoutPassword)
+from main_server.api.schemas.user import (PasswordChange, TelegramBind, UserCreate, Token, UserCreateWithoutPassword,
+                                          UserPasswordReset)
 from main_server.services import AuthService
 
 from main_server.db.secret_config import secret_settings
@@ -21,8 +22,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = jwt_settings.ACCESS_TOKEN_EXPIRE_MINUTES
 router = APIRouter(prefix="/auth", tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
-
-# Pydantic модели
 
 
 # Вспомогательные функции
@@ -93,6 +92,45 @@ async def bind_telegram(
     return {"success": True, "user_id": user_id}
 
 
+from fastapi import HTTPException, status
+
+
+@router.get("/telegram/is-bound", response_model=dict)
+async def check_telegram_binding(
+        auth_service: AuthService = Depends(get_auth_service),
+        current_user=Depends(get_current_user)
+):
+    """
+    Проверка наличия привязки аккаунта к Telegram боту
+
+    Возвращает информацию о статусе привязки
+    """
+    is_bound, user = await auth_service.check_telegram_binding(current_user.id)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Пользователь не найден"
+        )
+
+    return {
+        "is_bound": is_bound
+    }
+
+@router.post("/password/reset")
+async def reset_password(
+        reset_data: UserPasswordReset,
+        auth_service: AuthService = Depends(get_auth_service),
+        admin_user=Depends(get_manager_user)  # Только для менеджеров
+):
+    """
+    Сбрасывает пароль пользователя и отправляет новый на почту.
+
+    Доступно только для пользователей с правами менеджера.
+    """
+    result = await auth_service.reset_password(reset_data.user_id)
+    return {"success": result, "message": "Новый пароль сгенерирован и отправлен на почту"}
+
 @router.post("/password/change")
 async def change_password(
         data: PasswordChange,
@@ -107,18 +145,3 @@ async def change_password(
     return {"success": result}
 
 
-@router.post("/init-manager", status_code=status.HTTP_201_CREATED)
-async def init_manager(
-        user_data: UserCreate,
-        db: AsyncSession = Depends(get_db_session),
-        auth_service: AuthService = Depends(get_auth_service)
-):
-    # Создаем менеджера
-    user = await auth_service.register_user(
-        email=user_data.email,
-        full_name=user_data.full_name,
-        password=user_data.password,
-        role=UserRoles.MANAGER
-    )
-
-    return {"id": user.id, "email": user.email, "role": user.user_type}

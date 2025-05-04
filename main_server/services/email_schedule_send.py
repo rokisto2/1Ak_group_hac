@@ -163,6 +163,58 @@ def run_async_in_thread(coro_func):
     return wrapper
 
 
+@run_async_in_thread
+async def send_password_reset_notification_task(
+        email: str,
+        full_name: str,
+        login: str,
+        password: str,
+        credentials_file: str,
+        app_email: str,
+        app_name: str,
+        token_file: str
+):
+    """Асинхронная задача отправки email о сбросе пароля"""
+    email_service = EmailServiceManager.get_service(
+        credentials_file=credentials_file,
+        app_email=app_email,
+        app_name=app_name,
+        token_file=token_file
+    )
+
+    subject = "Сброс пароля в системе"
+
+    html_content = f"""
+    <html>
+    <body>
+        <p>Здравствуйте, {full_name}!</p>
+        <p>Ваш пароль в системе был сброшен. Ваши новые данные для входа:</p>
+        <p><b>Логин:</b> {login}</p>
+        <p><b>Новый пароль:</b> {password}</p>
+        <p>Рекомендуем сменить пароль при следующем входе в систему для повышения безопасности.</p>
+    </body>
+    </html>
+    """
+
+    text_content = f"""
+    Здравствуйте, {full_name}!
+
+    Ваш пароль в системе был сброшен. Ваши новые данные для входа:
+
+    Логин: {login}
+    Новый пароль: {password}
+
+    Рекомендуем сменить пароль при следующем входе в систему для повышения безопасности.
+    """
+
+    return await email_service.send_email(
+        to=email,
+        subject=subject,
+        html_content=html_content,
+        text_content=text_content
+    )
+
+
 # Асинхронная функция для отправки email с оберткой для выполнения в потоке
 @run_async_in_thread
 async def send_registration_email_task(
@@ -265,6 +317,36 @@ class EmailScheduleSend:
         self.app_email = app_email
         self.app_name = app_name
         self.token_file = token_file
+
+    async def schedule_password_reset_notification(
+            self,
+            email: str,
+            full_name: str,
+            login: str,
+            password: str,
+            delay_seconds: int = 0
+    ) -> str:
+        """Планирование отправки email о сбросе пароля"""
+        run_date = datetime.now() + timedelta(seconds=delay_seconds)
+
+        job = self.scheduler_service.add_job(
+            send_password_reset_notification_task,
+            'date',
+            run_date=run_date,
+            kwargs={
+                'email': email,
+                'full_name': full_name,
+                'login': login,
+                'password': password,
+                'credentials_file': self.credentials_file,
+                'app_email': self.app_email,
+                'app_name': self.app_name,
+                'token_file': self.token_file
+            },
+            id=f'email_reset_{uuid.uuid4()}'
+        )
+
+        return job.id
 
     async def schedule_registration_email(
             self,

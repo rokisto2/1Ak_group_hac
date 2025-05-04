@@ -79,6 +79,54 @@ class AuthService:
             )
         return user
 
+    async def reset_password(self, user_id: UUID) -> bool:
+        """Сбрасывает пароль пользователя и отправляет новый на почту"""
+        # Получаем пользователя
+        user = await self.user_repo.get(user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Пользователь не найден"
+            )
+
+        # Генерируем новый пароль
+        new_password = self._generate_password()
+
+        # Хешируем пароль
+        password_hash = pwd_ctx.hash(new_password)
+
+        # Обновляем пароль пользователя
+        await self.user_repo.update_user_info(
+            user_id=user_id,
+            password_hash=password_hash
+        )
+
+        # Отправляем уведомление о сбросе пароля
+        await self.email_schedule_send.schedule_password_reset_notification(
+            email=user.email,
+            full_name=user.full_name,
+            login=user.email,
+            password=new_password
+        )
+
+        return True
+
+    async def check_telegram_binding(self, user_id: UUID) -> tuple[bool, Optional[User]]:
+        """
+        Проверяет привязан ли аккаунт пользователя к телеграм-боту
+
+        Args:
+            user_id: ID пользователя
+
+        Returns:
+            Кортеж (статус привязки, chat_id телеграма)
+        """
+        user = await self.user_repo.get(user_id)
+        if not user:
+            return False,None
+
+        return user.chat_id is not None, user
+
     async def generate_telegram_key(self, user_id: UUID, expires_hours: int = 24):
         """Генерирует ключ для привязки Telegram аккаунта"""
         # Получение пользователя

@@ -36,6 +36,8 @@ class PasswordChange(BaseModel):
     old_password: str
     new_password: str
 
+class UserPasswordReset(BaseModel):
+    user_id: uuid.UUID
 
 class TelegramBind(BaseModel):
     key: str
