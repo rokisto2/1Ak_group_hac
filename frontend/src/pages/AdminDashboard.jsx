@@ -298,36 +298,36 @@ function AdminDashboard() {
                                                                 <Td>{report.report_name}</Td>
                                                                 <Td>{formatDate(report.generated_at)}</Td>
                                                                 <Td>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        colorScheme="blue"
-                                                                        mr={2}
-                                                                        onClick={() => handleDownload(report.report_url)}
-                                                                    >
-                                                                        Скачать отчет
-                                                                    </Button>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        colorScheme="gray"
-                                                                        onClick={() => handleDownload(report.excel_url)}
-                                                                    >
-                                                                        Excel
-                                                                    </Button>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        colorScheme="teal"  // Используем другой цвет для отличия
-                                                                        mr={2}
-                                                                        onClick={() => handleDownload(report.template_url)}
-                                                                    >
-                                                                        Шаблон
-                                                                    </Button>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        colorScheme="green"
-                                                                        onClick={() => navigate(`/send-report/${report.id}`)}
-                                                                    >
-                                                                        Отправить
-                                                                    </Button>
+                                                                    <HStack spacing={2}>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            colorScheme="blue"
+                                                                            onClick={() => handleDownload(report.report_url)}
+                                                                        >
+                                                                            Скачать отчет
+                                                                        </Button>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            colorScheme="gray"
+                                                                            onClick={() => handleDownload(report.excel_url)}
+                                                                        >
+                                                                            Excel
+                                                                        </Button>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            colorScheme="teal"
+                                                                            onClick={() => handleDownload(report.template_url)}
+                                                                        >
+                                                                            Шаблон
+                                                                        </Button>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            colorScheme="green"
+                                                                            onClick={() => navigate(`/send-report/${report.id}`)}
+                                                                        >
+                                                                            Отправить
+                                                                        </Button>
+                                                                    </HStack>
                                                                 </Td>
                                                             </Tr>
                                                         ))}

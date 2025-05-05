@@ -32,6 +32,19 @@ function SendReport() {
         fetchReportDetails();
     }, []);
 
+
+    const CheckboxWithSync = ({ userId, deliveryMethod, selectedUsers, onChange }) => {
+        const isChecked =
+            selectedUsers[userId] &&
+            selectedUsers[userId].includes(deliveryMethod);
+
+        const handleChange = (e) => {
+            onChange(userId, deliveryMethod, e.target.checked);
+        };
+
+        return <Checkbox isChecked={isChecked} onChange={handleChange} />;
+    };
+
     const fetchReportDetails = async () => {
         try {
             // Логируем ID отчета для диагностики
@@ -101,23 +114,35 @@ function SendReport() {
         }
     };
 
+    const [selectAllState, setSelectAllState] = useState({});
+
     useEffect(() => {
-        fetchUsers(userCurrentPage);
-    }, [userCurrentPage]);
+        const updatedSelectAllState = {};
+        deliverySystems.forEach((system) => {
+            updatedSelectAllState[system.id] = users.every(
+                (user) =>
+                    selectedUsers[user.id] &&
+                    selectedUsers[user.id].includes(system.id)
+            );
+        });
+        setSelectAllState(updatedSelectAllState);
+    }, [selectedUsers, users]);
 
     const handleSelectAll = (deliveryMethod, isChecked) => {
-        setSelectedUsers(prev => {
+        setSelectedUsers((prev) => {
             const updatedUsers = { ...prev };
 
-            users.forEach(user => {
+            users.forEach((user) => {
                 if (isChecked) {
                     updatedUsers[user.id] = [
                         ...(updatedUsers[user.id] || []),
-                        deliveryMethod
+                        deliveryMethod,
                     ].filter((v, i, a) => a.indexOf(v) === i);
                 } else {
                     if (updatedUsers[user.id]) {
-                        updatedUsers[user.id] = updatedUsers[user.id].filter(method => method !== deliveryMethod);
+                        updatedUsers[user.id] = updatedUsers[user.id].filter(
+                            (method) => method !== deliveryMethod
+                        );
                         if (updatedUsers[user.id].length === 0) {
                             delete updatedUsers[user.id];
                         }
@@ -129,23 +154,29 @@ function SendReport() {
         });
     };
 
-    const handleUserDeliverySelection = (userId, deliveryMethod) => {
-        setSelectedUsers(prev => {
-            const userMethods = prev[userId] || [];
+    const handleUserDeliverySelection = (userId, deliveryMethod, isChecked) => {
+        setSelectedUsers((prev) => {
+            const updatedUsers = { ...prev };
+            const userMethods = updatedUsers[userId] || [];
 
-            if (userMethods.includes(deliveryMethod)) {
-                const updatedMethods = userMethods.filter(method => method !== deliveryMethod);
-                if (updatedMethods.length === 0) {
-                    const newPrev = { ...prev };
-                    delete newPrev[userId];
-                    return newPrev;
-                }
-                return { ...prev, [userId]: updatedMethods };
+            if (isChecked) {
+                // Добавляем метод доставки
+                updatedUsers[userId] = [...userMethods, deliveryMethod];
             } else {
-                return { ...prev, [userId]: [...userMethods, deliveryMethod] };
+                // Удаляем метод доставки
+                updatedUsers[userId] = userMethods.filter((method) => method !== deliveryMethod);
+                if (updatedUsers[userId].length === 0) {
+                    delete updatedUsers[userId];
+                }
             }
+
+            return updatedUsers;
         });
     };
+
+    useEffect(() => {
+        console.log("Обновлено состояние selectedUsers:", selectedUsers);
+    }, [selectedUsers]);
 
     const handleSendReport = async () => {
         const usersInfo = Object.entries(selectedUsers).map(([userId, methods]) => {
@@ -221,34 +252,37 @@ function SendReport() {
                             <Thead>
                                 <Tr>
                                     <Th>Пользователь</Th>
-                                    {deliverySystems.map(system => (
+                                    {deliverySystems.map((system) => (
                                         <Th key={system.id}>
                                             {system.name}
                                             <Checkbox
                                                 ml={2}
-                                                onChange={(e) => handleSelectAll(system.id, e.target.checked)}
+                                                isChecked={selectAllState[system.id] || false}
+                                                onChange={(e) =>
+                                                    handleSelectAll(system.id, e.target.checked)
+                                                }
                                             />
                                         </Th>
                                     ))}
                                 </Tr>
                             </Thead>
                             <Tbody>
-                                {Array.isArray(users) && users.map(user => (
-                                    <Tr key={user.id}>
-                                        <Td>{user.full_name || user.email}</Td>
-                                        {deliverySystems.map(system => (
-                                            <Td key={system.id}>
-                                                <Checkbox
-                                                    isChecked={
-                                                        selectedUsers[user.id] &&
-                                                        selectedUsers[user.id].includes(system.id)
-                                                    }
-                                                    onChange={() => handleUserDeliverySelection(user.id, system.id)}
-                                                />
-                                            </Td>
-                                        ))}
-                                    </Tr>
-                                ))}
+                                {Array.isArray(users) &&
+                                    users.map((user) => (
+                                        <Tr key={user.id}>
+                                            <Td>{user.full_name || user.email}</Td>
+                                            {deliverySystems.map((system) => (
+                                                <Td key={system.id}>
+                                                    <CheckboxWithSync
+                                                        userId={user.id}
+                                                        deliveryMethod={system.id}
+                                                        selectedUsers={selectedUsers}
+                                                        onChange={handleUserDeliverySelection}
+                                                    />
+                                                </Td>
+                                            ))}
+                                        </Tr>
+                                    ))}
                             </Tbody>
                         </Table>
 
