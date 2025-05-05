@@ -315,6 +315,14 @@ function AdminDashboard() {
                                                                     </Button>
                                                                     <Button
                                                                         size="sm"
+                                                                        colorScheme="teal"  // Используем другой цвет для отличия
+                                                                        mr={2}
+                                                                        onClick={() => handleDownload(report.template_url)}
+                                                                    >
+                                                                        Шаблон
+                                                                    </Button>
+                                                                    <Button
+                                                                        size="sm"
                                                                         colorScheme="green"
                                                                         onClick={() => navigate(`/send-report/${report.id}`)}
                                                                     >
