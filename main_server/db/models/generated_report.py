@@ -15,7 +15,7 @@ class GeneratedReport(Base):
     report_url = Column(String(512))
     excel_url = Column(String(512))
     template_url = Column(String(512))
-    delivered_at = Column(DateTime, default=lambda: datetime.utcnow() + timedelta(hours=3))
+    generated_at = Column(DateTime, default=lambda: datetime.utcnow() + timedelta(hours=3))
 
     user = relationship("User", back_populates="reports")
     delivery_logs = relationship("ReportDeliveryLog", back_populates="report")
