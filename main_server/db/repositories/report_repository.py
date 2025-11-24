@@ -15,15 +15,11 @@ class ReportRepository:
             self,
             report_name: str,
             report_url: str,
-            excel_url: str,
-            template_url: str,
             user_id: uuid4
     ) -> GeneratedReport:
         report = GeneratedReport(
             report_name=report_name,
             report_url=report_url,
-            excel_url=excel_url,
-            template_url=template_url,
             user_id=user_id,
         )
         self._session.add(report)

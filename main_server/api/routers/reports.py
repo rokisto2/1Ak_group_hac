@@ -16,23 +16,29 @@ from main_server.db.repositories import ReportRepository, S3StorageRepository
 
 router = APIRouter(prefix="/reports")
 
-@router.post("/")
+
+@router.post("", name="create_report")
 async def create_report(
-    excel_file: UploadFile = File(...),
-    template_file: UploadFile = File(...),
-    report_name: str = "Generated Report",
-    storage_repo: S3StorageRepository = Depends(get_s3_storage_repository),
-    report_repo: ReportRepository = Depends(get_report_repository),
-    current_user: User = Depends(auth.get_current_user),
+        file: UploadFile = File(...),
+        report_name: str = "Generated Report",
+        storage_repo: S3StorageRepository = Depends(get_s3_storage_repository),
+        report_repo: ReportRepository = Depends(get_report_repository),
+        current_user: User = Depends(auth.get_current_user),
 ):
-    """Create new report"""
+    """Upload report file to MinIO and save metadata"""
     service = ReportService(storage_repo, report_repo)
     try:
+        # Получаем содержимое файла
+        file_content = await file.read()
+
+        # Используем оригинальное имя файла или переданное report_name
+        original_filename = file.filename or report_name
+
         return await service.generate_report(
-            excel_data=await excel_file.read(),
-            template_data=await template_file.read(),
-            report_name=report_name,
+            file=file_content,
+            report_name=original_filename,  # Передаем оригинальное имя с расширением
             user_id=current_user.id,
+            set_report_name=report_name
         )
     except HTTPException:
         raise
@@ -102,8 +108,6 @@ class ReportResponse(BaseModel):
     id: UUID
     report_name: str
     report_url: str
-    excel_url: str
-    template_url: str
     generated_at: datetime
 
     @classmethod
@@ -112,8 +116,6 @@ class ReportResponse(BaseModel):
             id=report.id,
             report_name=report.report_name,
             report_url=report.report_url,
-            excel_url=report.excel_url,
-            template_url=report.template_url,
             generated_at=report.generated_at
         )
 

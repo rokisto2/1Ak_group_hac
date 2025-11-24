@@ -18,9 +18,8 @@ function AdminDashboard() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [reports, setReports] = useState([]);
+    const [reportFile, setReportFile] = useState(null);
 
-    const [excelFile, setExcelFile] = useState(null);
-    const [templateFile, setTemplateFile] = useState(null);
     const [reportName, setReportName] = useState("");
 
 
@@ -95,18 +94,14 @@ function AdminDashboard() {
         fetchReports(currentPage);
     }, [currentPage]);
 
-    const handleExcelFileChange = (e) => {
-        setExcelFile(e.target.files[0]);
-    };
-
-    const handleTemplateFileChange = (e) => {
-        setTemplateFile(e.target.files[0]);
+    const handleReportFileChange = (e) => {
+        setReportFile(e.target.files[0]);
     };
 
     const handleCreateReport = async (e) => {
         e.preventDefault();
 
-        if (!excelFile || !templateFile || !reportName.trim()) {
+        if (!reportFile || !reportName.trim()) {
             toast({
                 title: "Ошибка",
                 description: "Пожалуйста, заполните все поля",
@@ -119,14 +114,12 @@ function AdminDashboard() {
 
         setIsLoading(true);
 
-        const url = getApiUrl(`/reports?report_name=${encodeURIComponent(reportName.trim())}`);
-
         const formData = new FormData();
-        formData.append("excel_file", excelFile);
-        formData.append("template_file", templateFile);
+        formData.append("file", reportFile);
+        formData.append("report_name", reportName.trim()); // Добавляем report_name в FormData
 
         try {
-            await axios.post(url, formData, {
+            await axios.post(getApiUrl('/reports'), formData, { // Убираем query-параметр из URL
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('accessToken')}`
                 }
@@ -134,23 +127,21 @@ function AdminDashboard() {
 
             toast({
                 title: "Успешно",
-                description: "Отчет успешно создан",
+                description: "Отчет успешно загружен",
                 status: "success",
                 duration: 3000,
                 isClosable: true
             });
 
-            setExcelFile(null);
-            setTemplateFile(null);
+            setReportFile(null);
             setReportName("");
-            document.getElementById("excel-file").value = "";
-            document.getElementById("template-file").value = "";
+            document.getElementById("report-file").value = "";
 
             fetchReports();
         } catch (error) {
             toast({
                 title: "Ошибка",
-                description: `Не удалось создать отчет: ${error.response?.data?.detail || error.message}`,
+                description: `Не удалось загрузить отчет: ${error.response?.data?.detail || error.message}`,
                 status: "error",
                 duration: 5000,
                 isClosable: true
@@ -159,6 +150,7 @@ function AdminDashboard() {
             setIsLoading(false);
         }
     };
+
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -199,7 +191,7 @@ function AdminDashboard() {
 
                 <Tabs variant="enclosed" mt={6}>
                     <TabList>
-                        <Tab>Создание отчета</Tab>
+                        <Tab>Загрузка отчета</Tab>
                         <Tab>История отчетов</Tab>
                     </TabList>
 
@@ -220,41 +212,21 @@ function AdminDashboard() {
                                                 </FormControl>
 
                                                 <FormControl isRequired>
-                                                    <FormLabel>Excel-файл с данными</FormLabel>
+                                                    <FormLabel>Файл отчета</FormLabel>
                                                     <Box borderWidth="1px" borderRadius="md" p={4} bg="gray.50">
                                                         <Input
-                                                            id="excel-file"
+                                                            id="report-file"
                                                             type="file"
-                                                            accept=".xlsx,.xls,.csv"
-                                                            onChange={handleExcelFileChange}
+                                                            accept=".docx,.doc,.pdf"
+                                                            onChange={handleReportFileChange}
                                                             display="none"
                                                         />
-                                                        <Button as="label" htmlFor="excel-file" colorScheme="blue" mb={2}>
+                                                        <Button as="label" htmlFor="report-file" colorScheme="blue" mb={2}>
                                                             Выбрать файл
                                                         </Button>
-                                                        {excelFile && (
+                                                        {reportFile && (
                                                             <Text mt={2} fontSize="sm" color="gray.600">
-                                                                Выбранный файл: <strong>{excelFile.name}</strong>
-                                                            </Text>
-                                                        )}
-                                                    </Box>
-                                                </FormControl>
-
-                                                <FormControl isRequired mt={4}>
-                                                    <FormLabel>Файл шаблона</FormLabel>
-                                                    <Box borderWidth="1px" borderRadius="md" p={4} bg="gray.50">
-                                                        <Input
-                                                            id="template-file"
-                                                            type="file"
-                                                            onChange={handleTemplateFileChange}
-                                                            display="none"
-                                                        />
-                                                        <Button as="label" htmlFor="template-file" colorScheme="blue" mb={2}>
-                                                            Выбрать файл
-                                                        </Button>
-                                                        {templateFile && (
-                                                            <Text mt={2} fontSize="sm" color="gray.600">
-                                                                Выбранный файл: <strong>{templateFile.name}</strong>
+                                                                Выбранный файл: <strong>{reportFile.name}</strong>
                                                             </Text>
                                                         )}
                                                     </Box>
@@ -266,7 +238,7 @@ function AdminDashboard() {
                                                     type="submit"
                                                     isLoading={isLoading}
                                                 >
-                                                    Создать отчет
+                                                    Загрузить отчет
                                                 </Button>
                                             </VStack>
                                         </form>
@@ -305,20 +277,6 @@ function AdminDashboard() {
                                                                             onClick={() => handleDownload(report.report_url)}
                                                                         >
                                                                             Скачать отчет
-                                                                        </Button>
-                                                                        <Button
-                                                                            size="sm"
-                                                                            colorScheme="gray"
-                                                                            onClick={() => handleDownload(report.excel_url)}
-                                                                        >
-                                                                            Excel
-                                                                        </Button>
-                                                                        <Button
-                                                                            size="sm"
-                                                                            colorScheme="teal"
-                                                                            onClick={() => handleDownload(report.template_url)}
-                                                                        >
-                                                                            Шаблон
                                                                         </Button>
                                                                         <Button
                                                                             size="sm"

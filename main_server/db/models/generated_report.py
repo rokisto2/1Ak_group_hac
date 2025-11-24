@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from sqlalchemy import Column, String, DateTime, UUID, ForeignKey
 from sqlalchemy.orm import relationship
@@ -13,9 +13,7 @@ class GeneratedReport(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'))
     report_name = Column(String(255))
     report_url = Column(String(512))
-    excel_url = Column(String(512))
-    template_url = Column(String(512))
-    generated_at = Column(DateTime, default=lambda: datetime.utcnow() + timedelta(hours=3))
+    generated_at = Column(DateTime, default=lambda: datetime.utcnow())
 
     user = relationship("User", back_populates="reports")
     delivery_logs = relationship("ReportDeliveryLog", back_populates="report")

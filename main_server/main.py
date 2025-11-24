@@ -11,7 +11,7 @@ UPLOAD_FOLDER = os.path.abspath('../uploads')
 
 app = FastAPI()
 # TODO add env fro allow domen
-# Настройка CORS
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[secret_settings.FRONTEND_ORIGIN],

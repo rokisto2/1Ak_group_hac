@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Box, Button, FormControl, FormLabel, Input, VStack, Heading,
-    FormErrorMessage, useToast, InputGroup, InputRightElement
+    FormErrorMessage, useToast, InputGroup, InputRightElement,
 } from "@chakra-ui/react";
 import {getApiUrl} from "../utils/api.js";
 
@@ -89,14 +89,14 @@ function Login() {
     return (
         <Box width="100%" maxWidth="400px" mx="auto" mt={8}>
             <VStack spacing={8} align="stretch">
-                <Heading textAlign="center">Login</Heading>
+                <Heading textAlign="center">Логин</Heading>
                 <form onSubmit={handleSubmit}>
                     <VStack spacing={4}>
                         <FormControl isInvalid={errors.email}>
                             <FormLabel>Email</FormLabel>
                             <Input
                                 type="email"
-                                placeholder="Enter your email"
+                                placeholder="Введите почту"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
@@ -104,11 +104,11 @@ function Login() {
                         </FormControl>
 
                         <FormControl isInvalid={errors.password}>
-                            <FormLabel>Password</FormLabel>
+                            <FormLabel>Пароль</FormLabel>
                             <InputGroup>
                                 <Input
                                     type={showPassword ? "text" : "password"}
-                                    placeholder="Enter your password"
+                                    placeholder="Введите пароль"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
@@ -118,7 +118,7 @@ function Login() {
                                         size="sm"
                                         onClick={() => setShowPassword(!showPassword)}
                                     >
-                                        {showPassword ? "Hide" : "Show"}
+                                        {showPassword ? "Скрыть" : "Показать"}
                                     </Button>
                                 </InputRightElement>
                             </InputGroup>
@@ -132,7 +132,7 @@ function Login() {
                             type="submit"
                             isLoading={isLoading}
                         >
-                            Log In
+                             Вход
                         </Button>
                     </VStack>
                 </form>

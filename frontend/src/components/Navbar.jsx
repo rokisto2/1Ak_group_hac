@@ -12,7 +12,7 @@ function Navbar({ title }) {
         localStorage.removeItem("userId");
 
         toast({
-            title: "Logged out successfully",
+            title: "Успешный выход из системы",
             status: "success",
             duration: 3000,
             isClosable: true,
@@ -40,7 +40,7 @@ function Navbar({ title }) {
                 variant="ghost"
                 onClick={handleLogout}
             >
-                Logout
+                Выйти
             </Button>
         </Flex>
     );

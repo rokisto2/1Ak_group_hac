@@ -153,25 +153,25 @@ function UserDashboard() {
                         <Flex justify="center" my={2}>
                             <Spinner size="sm" />
                         </Flex>
-                    ) : isTelegramBound ? (
-                        <Box>
-                            <Badge colorScheme="green" mb={2}>Аккаунт привязан к Telegram</Badge>
-                            <Text fontSize="sm">Вы можете получать уведомления через Telegram</Text>
-                        </Box>
                     ) : (
-                        <>
-                            <Text fontSize="sm" mb={3}>Подключите ваш Telegram аккаунт используя одноразовый ключ.</Text>
+                        <Box>
+                            {isTelegramBound && (
+                                <Box mb={3}>
+                                    <Badge colorScheme="green" mb={2}>Аккаунт привязан к Telegram</Badge>
+                                    <Text fontSize="sm">Вы получаете уведомления через Telegram</Text>
+                                </Box>
+                            )}
 
                             <Box mb={2} display="flex" flexDirection="column" alignItems="center">
                                 <Button
-                                    colorScheme="gray"
+                                    colorScheme="blue"
                                     size="sm"
                                     onClick={handleGenerateTelegramKey}
                                     isLoading={isGeneratingKey}
                                     mb={3}
                                     width="200px"
                                 >
-                                    Сгенерировать ключ
+                                    {isTelegramBound ? "Пересоздать ключ" : "Сгенерировать ключ"}
                                 </Button>
 
                                 {telegramKey && (
@@ -194,10 +194,10 @@ function UserDashboard() {
 
                             {telegramKey && (
                                 <Text fontSize="xs" color="gray.600" textAlign="center" mt={2}>
-                                    Используйте этот ключ для подключения к Telegram боту. Действителен только для одноразового использования.
+                                    Используйте этот ключ для подключения к Telegram боту.
                                 </Text>
                             )}
-                        </>
+                        </Box>
                     )}
                 </Box>
 
