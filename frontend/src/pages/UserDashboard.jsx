@@ -2,12 +2,13 @@
 import {useState, useEffect} from 'react';
 import {
     Box, Heading, Text, Table, Thead, Tbody, Tr, Th, Td,
-    Link, Flex, Button, Spinner, useToast, Badge, Divider,
+    Flex, Button, Spinner, useToast, Badge, Divider,
     Input, InputGroup, InputRightElement, useClipboard
 } from "@chakra-ui/react";
 import Navbar from "../components/Navbar";
 import axios from 'axios';
 import {getApiUrl} from "../utils/api.js";
+import { useTranslation } from "react-i18next";
 
 function UserDashboard() {
     const [reports, setReports] = useState([]);
@@ -16,6 +17,7 @@ function UserDashboard() {
     const [currentPage, setCurrentPage] = useState(1);
     const [perPage] = useState(10);
     const toast = useToast();
+    const { t } = useTranslation();
 
     const [telegramKey, setTelegramKey] = useState("");
     const [isGeneratingKey, setIsGeneratingKey] = useState(false);
@@ -116,15 +118,15 @@ function UserDashboard() {
             setTelegramKey(response.data.key);
 
             toast({
-                title: 'Ключ Telegram успешно сгенерирован',
+                title: t('userDashboard.telegramKeyGenerated'),
                 status: 'success',
                 duration: 3000,
                 isClosable: true,
             });
         } catch (error) {
             toast({
-                title: 'Ошибка генерации ключа',
-                description: error.response?.data?.detail || 'Не удалось сгенерировать ключ Telegram',
+                title: t('userDashboard.telegramKeyError'),
+                description: error.response?.data?.detail || t('userDashboard.telegramKeyErrorDescription'),
                 status: 'error',
                 duration: 5000,
                 isClosable: true,
@@ -210,18 +212,18 @@ function UserDashboard() {
                         <Spinner size="xl"/>
                     </Flex>
                 ) : reports.length === 0 ? (
-                    <Text>Отчетов пока нет.</Text>
+                    <Text>{t('userDashboard.noReports')}</Text>
                 ) : (
                     <>
                         <Box overflowX="auto">
                             <Table variant="simple" size="sm">
                                 <Thead>
                                     <Tr>
-                                        <Th>Название отчета</Th>
-                                        <Th>Отправитель</Th>
+                                        <Th>{t('userDashboard.reportName')}</Th>
+                                        <Th>{t('userDashboard.sentBy')}</Th>
                                         <Th>Способ доставки</Th>
-                                        <Th>Получено</Th>
-                                        <Th>Действие</Th>
+                                        <Th>{t('userDashboard.receivedAt')}</Th>
+                                        <Th>{t('userDashboard.actions')}</Th>
                                     </Tr>
                                 </Thead>
                                 <Tbody>
@@ -242,7 +244,7 @@ function UserDashboard() {
                                                     colorScheme="blue"
                                                     onClick={() => handleDownload(report.report_url)}
                                                 >
-                                                    Скачать
+                                                    {t('userDashboard.download')}
                                                 </Button>
                                             </Td>
                                         </Tr>
@@ -253,7 +255,7 @@ function UserDashboard() {
 
                         <Flex justify="space-between" mt={4} align="center">
                             <Text>
-                                Страница {pagination.page || 0} из {pagination.total_pages || 0} страниц
+                                {t('userDashboard.page')} {pagination.page || 0} {t('userDashboard.of')} {pagination.total_pages || 0} страниц
                                 ({pagination.total || 0} всего отчетов)
                             </Text>
                             <Flex>
@@ -263,14 +265,14 @@ function UserDashboard() {
                                     size="sm"
                                     mr={2}
                                 >
-                                    ← Назад
+                                    ← {t('userDashboard.previous')}
                                 </Button>
                                 <Button
                                     onClick={() => setCurrentPage(prev => prev + 1)}
                                     disabled={!pagination.has_next}
                                     size="sm"
                                 >
-                                    Вперед →
+                                    {t('userDashboard.next')} →
                                 </Button>
                             </Flex>
                         </Flex>

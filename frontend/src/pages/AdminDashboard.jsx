@@ -10,6 +10,7 @@ import Navbar from "../components/Navbar";
 import axios from "axios";
 import { getApiUrl } from "../utils/api.js";
 import { useNavigate } from "react-router-dom";
+import {useTranslation} from "react-i18next";
 
 
 function AdminDashboard() {
@@ -19,7 +20,7 @@ function AdminDashboard() {
     const [isLoading, setIsLoading] = useState(false);
     const [reports, setReports] = useState([]);
     const [reportFile, setReportFile] = useState(null);
-
+    const { t } = useTranslation();
     const [reportName, setReportName] = useState("");
 
 
@@ -62,8 +63,8 @@ function AdminDashboard() {
             console.error("Error fetching users:", error);
 
             toast({
-                title: "Ошибка",
-                description: "Не удалось загрузить список отчетов",
+                title: t('adminDashboard.error'),
+                description: t('adminDashboard.errorLoadingReports'),
                 status: "error",
                 duration: 3000,
                 isClosable: true
@@ -103,8 +104,8 @@ function AdminDashboard() {
 
         if (!reportFile || !reportName.trim()) {
             toast({
-                title: "Ошибка",
-                description: "Пожалуйста, заполните все поля",
+                title: t('adminDashboard.error'),
+                description: t('adminDashboard.fillAllFields'),
                 status: "error",
                 duration: 3000,
                 isClosable: true
@@ -126,8 +127,8 @@ function AdminDashboard() {
             });
 
             toast({
-                title: "Успешно",
-                description: "Отчет успешно загружен",
+                title: t('adminDashboard.success'),
+                description: t('adminDashboard.reportUploaded'),
                 status: "success",
                 duration: 3000,
                 isClosable: true
@@ -140,8 +141,8 @@ function AdminDashboard() {
             fetchReports();
         } catch (error) {
             toast({
-                title: "Ошибка",
-                description: `Не удалось загрузить отчет: ${error.response?.data?.detail || error.message}`,
+                title: t('adminDashboard.error'),
+                description: `${t('adminDashboard.errorUploadingReport')}: ${error.response?.data?.detail || error.message}`,
                 status: "error",
                 duration: 5000,
                 isClosable: true
@@ -173,8 +174,8 @@ function AdminDashboard() {
             window.open(downloadUrl, '_blank');
         } catch (error) {
             toast({
-                title: "Ошибка скачивания",
-                description: error.response?.data?.detail || "Не удалось скачать файл",
+                title: t('adminDashboard.downloadError'),
+                description: error.response?.data?.detail || t('adminDashboard.downloadErrorDescription'),
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -185,14 +186,14 @@ function AdminDashboard() {
 
     return (
         <Box width="100%" height="100vh" display="flex" flexDirection="column">
-            <Navbar title="Панель администратора" />
+            <Navbar title={t('adminDashboard.title')} />
             <Box p={5} flex="1" overflowY="auto">
-                <Heading mb={4}>Панель администратора</Heading>
+                <Heading mb={4}>{t('adminDashboard.title')}</Heading>
 
                 <Tabs variant="enclosed" mt={6}>
                     <TabList>
-                        <Tab>Загрузка отчета</Tab>
-                        <Tab>История отчетов</Tab>
+                        <Tab>{t('adminDashboard.uploadReportTab')}</Tab>
+                        <Tab>{t('adminDashboard.reportsHistoryTab')}</Tab>
                     </TabList>
 
                     <Box width="800px"> {/* Фиксированная ширина для всех панелей */}
@@ -203,16 +204,16 @@ function AdminDashboard() {
                                         <form onSubmit={handleCreateReport}>
                                             <VStack spacing={4} align="stretch">
                                                 <FormControl isRequired>
-                                                    <FormLabel>Название отчета</FormLabel>
+                                                    <FormLabel>{t('adminDashboard.reportName')}</FormLabel>
                                                     <Input
                                                         value={reportName}
                                                         onChange={(e) => setReportName(e.target.value)}
-                                                        placeholder="Введите название отчета"
+                                                        placeholder={t('adminDashboard.reportName')}
                                                     />
                                                 </FormControl>
 
                                                 <FormControl isRequired>
-                                                    <FormLabel>Файл отчета</FormLabel>
+                                                    <FormLabel>{t('adminDashboard.uploadFile')}</FormLabel>
                                                     <Box borderWidth="1px" borderRadius="md" p={4} bg="gray.50">
                                                         <Input
                                                             id="report-file"
@@ -222,11 +223,11 @@ function AdminDashboard() {
                                                             display="none"
                                                         />
                                                         <Button as="label" htmlFor="report-file" colorScheme="blue" mb={2}>
-                                                            Выбрать файл
+                                                            {t('adminDashboard.uploadFile')}
                                                         </Button>
                                                         {reportFile && (
                                                             <Text mt={2} fontSize="sm" color="gray.600">
-                                                                Выбранный файл: <strong>{reportFile.name}</strong>
+                                                                {reportFile.name}
                                                             </Text>
                                                         )}
                                                     </Box>
@@ -238,7 +239,7 @@ function AdminDashboard() {
                                                     type="submit"
                                                     isLoading={isLoading}
                                                 >
-                                                    Загрузить отчет
+                                                    {t('adminDashboard.createReportButton')}
                                                 </Button>
                                             </VStack>
                                         </form>
@@ -250,18 +251,18 @@ function AdminDashboard() {
                             <TabPanel>
                                 <Card>
                                     <CardBody>
-                                        <Heading size="md" mb={4}>История созданных отчетов</Heading>
+                                        <Heading size="md" mb={4}>{t('adminDashboard.reportsList')}</Heading>
 
                                         {!Array.isArray(reports) || reports.length === 0 ? (
-                                            <Text>Нет созданных отчетов</Text>
+                                            <Text>{t('adminDashboard.noReports')}</Text>
                                         ) : (
                                             <>
                                                 <Table variant="simple">
                                                     <Thead>
                                                         <Tr>
-                                                            <Th>Название</Th>
-                                                            <Th>Дата создания</Th>
-                                                            <Th>Действия</Th>
+                                                            <Th>{t('adminDashboard.reportName')}</Th>
+                                                            <Th>{t('adminDashboard.createdAt')}</Th>
+                                                            <Th>{t('adminDashboard.actions')}</Th>
                                                         </Tr>
                                                     </Thead>
                                                     <Tbody>
@@ -276,14 +277,14 @@ function AdminDashboard() {
                                                                             colorScheme="blue"
                                                                             onClick={() => handleDownload(report.report_url)}
                                                                         >
-                                                                            Скачать отчет
+                                                                            {t('userDashboard.download')}
                                                                         </Button>
                                                                         <Button
                                                                             size="sm"
                                                                             colorScheme="green"
                                                                             onClick={() => navigate(`/send-report/${report.id}`)}
                                                                         >
-                                                                            Отправить
+                                                                            {t('adminDashboard.sendReport')}
                                                                         </Button>
                                                                     </HStack>
                                                                 </Td>
@@ -297,14 +298,14 @@ function AdminDashboard() {
                                                         onClick={handlePreviousPage}
                                                         isDisabled={currentPage === 1}
                                                     >
-                                                        Назад
+                                                        {t('adminDashboard.previous')}
                                                     </Button>
-                                                    <Text>Страница {currentPage} из {totalPages}</Text>
+                                                    <Text>{t('adminDashboard.page')} {currentPage} {t('adminDashboard.of')} {totalPages}</Text>
                                                     <Button
                                                         onClick={handleNextPage}
                                                         isDisabled={currentPage === totalPages}
                                                     >
-                                                        Вперед
+                                                        {t('adminDashboard.next')}
                                                     </Button>
 
                                                 </HStack>

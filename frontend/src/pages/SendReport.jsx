@@ -8,6 +8,7 @@ import {
 import Navbar from "../components/Navbar";
 import axios from "axios";
 import { getApiUrl } from "../utils/api.js";
+import {useTranslation} from "react-i18next";
 
 function SendReport() {
     const { reportId } = useParams();
@@ -16,11 +17,11 @@ function SendReport() {
     const [isLoading, setIsLoading] = useState(false);
     const [users, setUsers] = useState([]);
     const [selectedUsers, setSelectedUsers] = useState({});
-
+    const { t } = useTranslation();
     const deliverySystems = [
-        { id: "email", name: "Электронная почта" },
-        { id: "telegram", name: "Telegram" },
-        { id: "platform", name: "Платформа" }
+        { id: "email", name: t('sendReport.deliveryEmail') },
+        { id: "telegram", name: t('sendReport.deliveryTelegram') },
+        { id: "platform", name: t('sendReport.deliveryPlatform') }
     ];
 
     const [userCurrentPage, setUserCurrentPage] = useState(1);
@@ -56,8 +57,8 @@ function SendReport() {
 
             // Показываем более детальную ошибку
             toast({
-                title: "Ошибка",
-                description: `Не удалось загрузить данные отчета: ${error.response?.data?.detail || error.message}`,
+                title: t('sendReport.error'),
+                description: `${t('sendReport.errorLoadingReport')}: ${error.response?.data?.detail || error.message}`,
                 status: "error",
                 duration: 3000,
                 isClosable: true
@@ -91,8 +92,8 @@ function SendReport() {
             console.error("Error fetching users:", error);
 
             toast({
-                title: "Ошибка",
-                description: "Не удалось загрузить список пользователей",
+                title: t('sendReport.error'),
+                description: t('sendReport.errorLoadingUsers'),
                 status: "error",
                 duration: 3000,
                 isClosable: true
@@ -185,8 +186,8 @@ function SendReport() {
 
         if (usersInfo.length === 0) {
             toast({
-                title: "Ошибка",
-                description: "Выберите получателей и способы доставки",
+                title: t('sendReport.error'),
+                description: t('sendReport.selectRecipientsAndMethods'),
                 status: "error",
                 duration: 3000,
                 isClosable: true
@@ -208,8 +209,8 @@ function SendReport() {
             });
 
             toast({
-                title: "Успешно",
-                description: "Отчет успешно отправлен",
+                title: t('sendReport.success'),
+                description: t('sendReport.reportSent'),
                 status: "success",
                 duration: 3000,
                 isClosable: true
@@ -218,8 +219,8 @@ function SendReport() {
             navigate('/admin-dashboard');
         } catch (error) {
             toast({
-                title: "Ошибка",
-                description: error.response?.data?.detail || "Не удалось отправить отчет",
+                title: t('sendReport.error'),
+                description: error.response?.data?.detail || t('sendReport.errorSendingReport'),
                 status: "error",
                 duration: 5000,
                 isClosable: true
@@ -233,25 +234,25 @@ function SendReport() {
 
     return (
         <Box width="100%" height="100vh" display="flex" flexDirection="column">
-            <Navbar title="Отправка отчета" />
+            <Navbar title={t('sendReport.title')} />
             <Box p={5} flex="1" overflowY="auto">
                 <HStack mb={4} spacing={4}>
                     <Button variant="outline" onClick={() => navigate('/admin-dashboard')}>
-                        ← Назад
+                        ← {t('sendReport.backToReports')}
                     </Button>
-                    <Heading>Отправка отчета</Heading>
+                    <Heading>{t('sendReport.title')}</Heading>
                 </HStack>
 
 
 
                 <Card>
                     <CardBody>
-                        <Heading size="md" mb={4}>Выберите получателей и способы доставки</Heading>
+                        <Heading size="md" mb={4}>{t('sendReport.selectRecipients')}</Heading>
 
                         <Table variant="simple" size="sm">
                             <Thead>
                                 <Tr>
-                                    <Th>Пользователь</Th>
+                                    <Th>{t('managerDashboard.fullName')}</Th>
                                     {deliverySystems.map((system) => (
                                         <Th key={system.id}>
                                             {system.name}
@@ -292,15 +293,15 @@ function SendReport() {
                                 isDisabled={userCurrentPage === 1}
                                 size="sm"
                             >
-                                Назад
+                                {t('sendReport.previous')}
                             </Button>
-                            <Text>Страница {userCurrentPage} из {userTotalPages}</Text>
+                            <Text>{t('sendReport.page')} {userCurrentPage} {t('sendReport.of')} {userTotalPages}</Text>
                             <Button
                                 onClick={handleNextUserPage}
                                 isDisabled={userCurrentPage === userTotalPages}
                                 size="sm"
                             >
-                                Вперед
+                                {t('sendReport.next')}
                             </Button>
                         </HStack>
 
@@ -311,7 +312,7 @@ function SendReport() {
                             isLoading={isLoading}
                             isDisabled={Object.keys(selectedUsers).length === 0}
                         >
-                            Отправить отчет
+                            {t('sendReport.sendButton')}
                         </Button>
                     </CardBody>
                 </Card>

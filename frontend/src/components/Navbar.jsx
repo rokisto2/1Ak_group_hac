@@ -1,10 +1,13 @@
 // src/components/Navbar.jsx
 import { Flex, Box, Heading, Spacer, Button, useToast } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 function Navbar({ title }) {
     const navigate = useNavigate();
     const toast = useToast();
+    const { t } = useTranslation();
 
     const handleLogout = () => {
         localStorage.removeItem("accessToken");
@@ -12,7 +15,7 @@ function Navbar({ title }) {
         localStorage.removeItem("userId");
 
         toast({
-            title: "Успешный выход из системы",
+            title: t('userDashboard.logoutSuccess'),
             status: "success",
             duration: 3000,
             isClosable: true,
@@ -35,12 +38,15 @@ function Navbar({ title }) {
                 <Heading size="sm">{title}</Heading>
             </Box>
             <Spacer />
+            <Box mr={3}>
+                <LanguageSwitcher />
+            </Box>
             <Button
                 size="xs"
                 variant="ghost"
                 onClick={handleLogout}
             >
-                Выйти
+                {t('navbar.logout')}
             </Button>
         </Flex>
     );
