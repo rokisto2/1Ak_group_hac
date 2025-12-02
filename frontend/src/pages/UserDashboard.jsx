@@ -28,11 +28,11 @@ function UserDashboard() {
 
     useEffect(() => {
         fetchUserReceivedReports();
-    }, [currentPage]);
+    }, [currentPage, fetchUserReceivedReports]);
 
     useEffect(() => {
         checkTelegramBinding();
-    }, []);
+    }, [checkTelegramBinding]);
 
     const checkTelegramBinding = async () => {
         setCheckingTelegramStatus(true);
@@ -45,8 +45,8 @@ function UserDashboard() {
             setIsTelegramBound(response.data.is_bound);
         } catch (error) {
             toast({
-                title: 'Ошибка',
-                description: error.response?.data?.detail || 'Не удалось проверить статус привязки к Telegram',
+                title: t('userDashboard.error'),
+                description: error.response?.data?.detail || t('userDashboard.errorCheckingTelegram'),
                 status: 'error',
                 duration: 5000,
                 isClosable: true,
@@ -69,8 +69,8 @@ function UserDashboard() {
             setPagination(response.data.pagination);
         } catch (error) {
             toast({
-                title: 'Ошибка',
-                description: error.response?.data?.detail || 'Не удалось загрузить отчеты',
+                title: t('userDashboard.error'),
+                description: error.response?.data?.detail || t('userDashboard.errorLoadingReports'),
                 status: 'error',
                 duration: 5000,
                 isClosable: true,
@@ -97,8 +97,8 @@ function UserDashboard() {
             window.open(downloadUrl, '_blank');
         } catch (error) {
             toast({
-                title: 'Ошибка скачивания',
-                description: error.response?.data?.detail || 'Не удалось скачать отчет',
+                title: t('userDashboard.downloadError'),
+                description: error.response?.data?.detail || t('userDashboard.downloadErrorDescription'),
                 status: 'error',
                 duration: 5000,
                 isClosable: true,
@@ -143,13 +143,13 @@ function UserDashboard() {
 
     return (
         <Box width="100%" height="100vh" display="flex" flexDirection="column">
-            <Navbar title="Панель пользователя"/>
+            <Navbar title={t('userDashboard.title')}/>
             <Box p={5} flex="1" overflowY="auto">
-                <Heading mb={4}>Панель пользователя</Heading>
-                <Text mb={4}>Добро пожаловать в панель пользователя. У вас есть доступ обычного пользователя.</Text>
+                <Heading mb={4}>{t('userDashboard.title')}</Heading>
+                <Text mb={4}>{t('userDashboard.welcome')}</Text>
 
                 <Box my={4} p={3} borderWidth="1px" borderRadius="md" bg="white" boxShadow="sm">
-                    <Heading size="sm" mb={2}>Интеграция с Telegram</Heading>
+                    <Heading size="sm" mb={2}>{t('userDashboard.telegramIntegration')}</Heading>
 
                     {checkingTelegramStatus ? (
                         <Flex justify="center" my={2}>
@@ -159,8 +159,8 @@ function UserDashboard() {
                         <Box>
                             {isTelegramBound && (
                                 <Box mb={3}>
-                                    <Badge colorScheme="green" mb={2}>Аккаунт привязан к Telegram</Badge>
-                                    <Text fontSize="sm">Вы получаете уведомления через Telegram</Text>
+                                    <Badge colorScheme="green" mb={2}>{t('userDashboard.telegramBound')}</Badge>
+                                    <Text fontSize="sm">{t('userDashboard.telegramNotifications')}</Text>
                                 </Box>
                             )}
 
@@ -173,7 +173,7 @@ function UserDashboard() {
                                     mb={3}
                                     width="200px"
                                 >
-                                    {isTelegramBound ? "Пересоздать ключ" : "Сгенерировать ключ"}
+                                    {isTelegramBound ? t('userDashboard.regenerateKey') : t('userDashboard.generateKey')}
                                 </Button>
 
                                 {telegramKey && (
@@ -187,7 +187,7 @@ function UserDashboard() {
                                         />
                                         <InputRightElement width="4.5rem">
                                             <Button h="1.5rem" size="xs" onClick={onCopy} colorScheme="blue" variant="ghost">
-                                                {hasCopied ? "Скопировано" : "Копировать"}
+                                                {hasCopied ? t('userDashboard.keyCopied') : t('userDashboard.copyKey')}
                                             </Button>
                                         </InputRightElement>
                                     </InputGroup>
@@ -196,7 +196,7 @@ function UserDashboard() {
 
                             {telegramKey && (
                                 <Text fontSize="xs" color="gray.600" textAlign="center" mt={2}>
-                                    Используйте этот ключ для подключения к Telegram боту.
+                                    {t('userDashboard.keyInstructions')}
                                 </Text>
                             )}
                         </Box>
@@ -205,7 +205,7 @@ function UserDashboard() {
 
                 <Divider my={4}/>
 
-                <Heading size="md" mb={4}>Полученные отчеты</Heading>
+                <Heading size="md" mb={4}>{t('userDashboard.receivedReports')}</Heading>
 
                 {loading ? (
                     <Flex justify="center" my={8}>
@@ -221,7 +221,7 @@ function UserDashboard() {
                                     <Tr>
                                         <Th>{t('userDashboard.reportName')}</Th>
                                         <Th>{t('userDashboard.sentBy')}</Th>
-                                        <Th>Способ доставки</Th>
+                                        <Th>{t('userDashboard.deliveryMethod')}</Th>
                                         <Th>{t('userDashboard.receivedAt')}</Th>
                                         <Th>{t('userDashboard.actions')}</Th>
                                     </Tr>
@@ -255,8 +255,8 @@ function UserDashboard() {
 
                         <Flex justify="space-between" mt={4} align="center">
                             <Text>
-                                {t('userDashboard.page')} {pagination.page || 0} {t('userDashboard.of')} {pagination.total_pages || 0} страниц
-                                ({pagination.total || 0} всего отчетов)
+                                {t('userDashboard.page')} {pagination.page || 0} {t('userDashboard.of')} {pagination.total_pages || 0} {t('userDashboard.pages')}
+                                ({pagination.total || 0} {t('userDashboard.totalReports')})
                             </Text>
                             <Flex>
                                 <Button
