@@ -1,5 +1,5 @@
 // src/pages/UserDashboard.jsx
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useCallback} from 'react';
 import {
     Box, Heading, Text, Table, Thead, Tbody, Tr, Th, Td,
     Flex, Button, Spinner, useToast, Badge, Divider,
@@ -26,15 +26,7 @@ function UserDashboard() {
     const [isTelegramBound, setIsTelegramBound] = useState(false);
     const [checkingTelegramStatus, setCheckingTelegramStatus] = useState(true);
 
-    useEffect(() => {
-        fetchUserReceivedReports();
-    }, [currentPage, fetchUserReceivedReports]);
-
-    useEffect(() => {
-        checkTelegramBinding();
-    }, [checkTelegramBinding]);
-
-    const checkTelegramBinding = async () => {
+    const checkTelegramBinding = useCallback(async () => {
         setCheckingTelegramStatus(true);
         try {
             const response = await axios.get(getApiUrl('/auth/telegram/is-bound'), {
@@ -54,9 +46,9 @@ function UserDashboard() {
         } finally {
             setCheckingTelegramStatus(false);
         }
-    };
+    }, [toast, t]);
 
-    const fetchUserReceivedReports = async () => {
+    const fetchUserReceivedReports = useCallback(async () => {
         setLoading(true);
         try {
             const response = await axios.get(getApiUrl('/reports/user/received-reports'), {
@@ -78,7 +70,15 @@ function UserDashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [currentPage, perPage, toast, t]);
+
+    useEffect(() => {
+        fetchUserReceivedReports();
+    }, [fetchUserReceivedReports]);
+
+    useEffect(() => {
+        checkTelegramBinding();
+    }, [checkTelegramBinding]);
 
     const handleDownload = async (objectKey) => {
         try {
