@@ -8,6 +8,7 @@ volumes:
   1ak-group-hack-minio:
   1ak-group-hack-postgres:
   1ak-group-hack-redis:
+  1ak-group-hack-postgres-test:
 
 services:
   redis:
@@ -58,3 +59,18 @@ services:
         echo 'MinIO is ready. Creating bucket if needed...';
         mc mb myminio/${MINIO_BUCKET} || echo 'Bucket already exists';
       "
+
+  postgres-test:
+    image: 'postgres:${POSTGRES_VERSION}'
+    container_name: ${COMPOSE_PROJECT_NAME}-postgres-test
+    ports:
+      - "5433:5432"
+    volumes:
+      - 1ak-group-hack-postgres-test:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: testpassword
+      POSTGRES_USER: testuser
+      POSTGRES_DB: testdb
+    restart: always
+    profiles:
+      - test # Этот сервис будет запускаться только при активации профиля "test"
