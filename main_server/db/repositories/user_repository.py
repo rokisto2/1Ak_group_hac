@@ -171,7 +171,7 @@ class UserRepository(BaseRepository):
         """Изменить роль пользователя"""
         user = await self.get(user_id, include_banned=True)
         if user:
-            if user.is_banned == False:
+            if user.is_banned == True:
                 return user
             user.user_type = new_role
             self.db.add(user)
