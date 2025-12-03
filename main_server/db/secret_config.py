@@ -2,10 +2,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class SecretSettings(BaseSettings):
-    ##EMAIL_CREDENTIALS_FILE: str
-   # EMAIL_APP_ADDRESS: str
-   # EMAIL_APP_NAME: str
-#EMAIL_TOKEN_PATH: str
+    EMAIL_CREDENTIALS_FILE: str
+    EMAIL_APP_ADDRESS: str
+    EMAIL_APP_NAME: str
+    EMAIL_TOKEN_PATH: str
 
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
