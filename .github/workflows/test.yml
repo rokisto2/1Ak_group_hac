@@ -34,12 +34,35 @@ jobs:
       - name: Create test environment file
         run: |
           cat > .env << EOF
+          COMPOSE_PROJECT_NAME=1ak-group-hack-test
+          
+          # Redis
+          REDIS_VERSION=7.4.2
+          REDIS_CONTAINER=1ak-group-hack-redis-test
+          REDIS_PORT=6379
+          
+          # PostgreSQL
+          POSTGRES_VERSION=17.0
+          POSTGRES_CONTAINER=1ak-group-hack-postgres-test
+          POSTGRES_HOST=localhost
+          POSTGRES_PORT=5432
           POSTGRES_USER=testuser
-          POSTGRES_PASSWORD=testpassword
+          POSTGRES_USER_PASSWORD=testpassword
           POSTGRES_DB=testdb
-          SECRET_KEY=test_secret_key_for_testing_purposes_only
-          ALGORITHM=HS256
-          ACCESS_TOKEN_EXPIRE_MINUTES=30
+          
+          # MinIO
+          MINIO_VERSION=RELEASE.2025-04-08T15-41-24Z-cpuv1
+          MINIO_MC_VERSION=RELEASE.2025-04-08T15-39-49Z-cpuv1
+          MINIO_CONTAINER=1ak-group-hack-minio-test
+          MINIO_ROOT_USER=minioadmin
+          MINIO_HOST=localhost
+          MINIO_ROOT_PASSWORD=minioadmin
+          MINIO_API_PORT=9034
+          MINIO_WEB_CONSOLE_PORT=9131
+          MINIO_BUCKET=1ak-group-hack-bucket
+          
+          # Files
+          TEMP_FILES_DIR=/tmp/temp_send
           EOF
 
       - name: Run tests with pytest
