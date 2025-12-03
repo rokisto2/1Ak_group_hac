@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Tests
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Environment
+.env-secret
+*.json
+
+# Uploads and temp
+uploads/
+temp_send/
+
+# Frontend
+frontend/
+
+# Telegram bot
+tg_bot/
+
+# Docker
+docker/
+Dockerfile
+.dockerignore

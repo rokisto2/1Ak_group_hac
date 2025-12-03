@@ -58,3 +58,86 @@ services:
         echo 'MinIO is ready. Creating bucket if needed...';
         mc mb myminio/${MINIO_BUCKET} || echo 'Bucket already exists';
       "
+
+  # Nginx reverse proxy с HTTPS и балансировкой нагрузки
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME}-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - main_server_1
+      - main_server_2
+      - tg_bot
+      - frontend
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    restart: unless-stopped
+
+  # Главный бэкенд - инстанс 1
+  main_server_1:
+    build:
+      context: ..
+      dockerfile: docker/main_server/Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME}-main-server-1
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_USER_PASSWORD=${POSTGRES_USER_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - MINIO_HOST=minio
+      - MINIO_API_PORT=9000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    restart: unless-stopped
+
+  # Главный бэкенд - инстанс 2 (для балансировки нагрузки)
+  main_server_2:
+    build:
+      context: ..
+      dockerfile: docker/main_server/Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME}-main-server-2
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_USER_PASSWORD=${POSTGRES_USER_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - MINIO_HOST=minio
+      - MINIO_API_PORT=9000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    restart: unless-stopped
+
+  # Telegram Bot API
+  tg_bot:
+    build:
+      context: ..
+      dockerfile: docker/tg_bot/Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME}-tg-bot
+    environment:
+      - MAIN_SERVER_URL=http://main_server_1:8000
+    restart: unless-stopped
+
+  # Frontend (React + Vite)
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: ../docker/frontend/Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME}-frontend
+    environment:
+      - VITE_API_BASE_URL=https://localhost/api
+    restart: unless-stopped
