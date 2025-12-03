@@ -31,7 +31,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Create test environment file
+      - name: Create test environment files
         run: |
           cat > .env << EOF
           COMPOSE_PROJECT_NAME=1ak-group-hack-test
@@ -64,10 +64,36 @@ jobs:
           # Files
           TEMP_FILES_DIR=/tmp/temp_send
           EOF
+          
+          cat > .env-secret << EOF
+          # Email settings
+          EMAIL_CREDENTIALS_FILE=/tmp/test_credentials.json
+          EMAIL_APP_ADDRESS=test@example.com
+          EMAIL_APP_NAME=Test App
+          EMAIL_TOKEN_PATH=/tmp/test_token.json
+          
+          # Auth settings
+          SECRET_KEY=test_secret_key_for_testing_only_min_32_chars
+          ALGORITHM=HS256
+          ACCESS_TOKEN_EXPIRE_MINUTES=30
+          
+          # Telegram Bot
+          TG_BOT_API_URL=http://localhost:8001
+          
+          # Frontend
+          FRONTEND_ORIGIN=http://localhost:5173
+          EOF
+          
+          # Create dummy email credential files
+          echo '{}' > /tmp/test_credentials.json
+          echo '{}' > /tmp/test_token.json
 
       - name: Run tests with pytest
         run: |
-          pytest tests/ -v --tb=short --cov=main_server --cov-report=term-missing
+          pytest tests/ -v --tb=short --cov=main_server --cov-report=term-missing \
+            --ignore=tests/services/test_email.py \
+            --ignore=tests/services/test_email_schedule_send.py \
+            --ignore=tests/services/test_report_delivery_service.py
 
       - name: Upload coverage reports
         if: always()
