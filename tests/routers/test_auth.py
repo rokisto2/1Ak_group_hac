@@ -1,7 +1,162 @@
-# tests/backend_tests.py
-from fastapi.testclient import TestClient
 import pytest
+from unittest.mock import AsyncMock, patch
+from fastapi.testclient import TestClient
+import uuid
+from types import SimpleNamespace
 
+from main_server.main import app
+from main_server.services import AuthService
+from main_server.core.dependencies import get_auth_service, get_current_user, get_manager_user
+
+@pytest.fixture
+def mock_auth_service() -> AsyncMock:
+    mock = AsyncMock(spec=AuthService)
+    # Using dependency_overrides is the recommended way for testing with FastAPI
+    original_auth = app.dependency_overrides.get(get_auth_service)
+    app.dependency_overrides[get_auth_service] = lambda: mock
+    yield mock
+    # Clear the override after the test
+    if original_auth:
+        app.dependency_overrides[get_auth_service] = original_auth
+    else:
+        if get_auth_service in app.dependency_overrides:
+            del app.dependency_overrides[get_auth_service]
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+@pytest.fixture
+def manager_user_data():
+    return SimpleNamespace(id=uuid.uuid4(), user_type="manager")
+
+
+@pytest.fixture
+def normal_user_data():
+    return SimpleNamespace(id=uuid.uuid4(), user_type="user")
+
+# These fixtures are now simpler as we can control the user object directly
+@pytest.fixture
+def mock_get_current_user(normal_user_data):
+    original_current = app.dependency_overrides.get(get_current_user)
+    app.dependency_overrides[get_current_user] = lambda: normal_user_data
+    yield
+    if original_current:
+        app.dependency_overrides[get_current_user] = original_current
+    else:
+        if get_current_user in app.dependency_overrides:
+            del app.dependency_overrides[get_current_user]
+
+@pytest.fixture
+def mock_get_manager_user(manager_user_data):
+    original_manager = app.dependency_overrides.get(get_manager_user)
+    app.dependency_overrides[get_manager_user] = lambda: manager_user_data
+    yield
+    if original_manager:
+        app.dependency_overrides[get_manager_user] = original_manager
+    else:
+        if get_manager_user in app.dependency_overrides:
+            del app.dependency_overrides[get_manager_user]
+
+
+def test_login(client, mock_auth_service):
+    # Setup mock
+    user_id = uuid.uuid4()
+    mock_user = SimpleNamespace(id=user_id, user_type="user")
+    mock_auth_service.login.return_value = mock_user
+
+    # Call endpoint
+    response = client.post("/api/auth/login", data={"username": "test@example.com", "password": "password"})
+
+    # Assert
+    assert response.status_code == 200
+    assert "access_token" in response.json()
+    mock_auth_service.login.assert_awaited_once_with("test@example.com", "password")
+
+
+def test_register_user(client, mock_auth_service, mock_get_manager_user):
+    # Setup mocks
+    new_user_id = uuid.uuid4()
+    mock_auth_service.register_user.return_value = SimpleNamespace(id=new_user_id, email="new@example.com", user_type="user")
+
+    # Call endpoint
+    response = client.post("/api/auth/register", json={"email": "new@example.com", "full_name": "New User", "role": "user"})
+
+    # Assert
+    assert response.status_code == 201
+    mock_auth_service.register_user.assert_awaited_once_with(email="new@example.com", full_name="New User", password=None, role="user")
+
+
+def test_generate_telegram_key(client, mock_auth_service, mock_get_current_user, normal_user_data):
+    # Setup mocks
+    mock_auth_service.generate_telegram_key.return_value = "test_key"
+
+    # Call endpoint
+    response = client.post("/api/auth/telegram/generate")
+
+    # Assert
+    assert response.status_code == 200
+    assert response.json() == {"key": "test_key"}
+    mock_auth_service.generate_telegram_key.assert_awaited_once_with(normal_user_data.id)
+
+
+def test_bind_telegram(client, mock_auth_service):
+    # Setup mocks
+    mock_auth_service.bind_telegram.return_value = SimpleNamespace(id=uuid.uuid4())
+
+    # Call endpoint
+    response = client.post("/api/auth/telegram/bind", json={"key": "test_key", "chat_id": "12345"})
+
+    # Assert
+    assert response.status_code == 200
+    assert "success" in response.json()
+    mock_auth_service.bind_telegram.assert_awaited_once_with("test_key", "12345")
+
+
+def test_check_telegram_binding(client, mock_auth_service, mock_get_current_user, normal_user_data):
+    # Setup mocks
+    mock_auth_service.check_telegram_binding.return_value = (True, SimpleNamespace(id=normal_user_data.id))
+
+    # Call endpoint
+    response = client.get("/api/auth/telegram/is-bound")
+
+    # Assert
+    assert response.status_code == 200
+    assert response.json() == {"is_bound": True}
+    mock_auth_service.check_telegram_binding.assert_awaited_once_with(normal_user_data.id)
+
+
+def test_reset_password(client, mock_auth_service, mock_get_manager_user):
+    # Setup mocks
+    mock_auth_service.reset_password.return_value = True
+    user_id_to_reset = uuid.uuid4()
+
+    # Call endpoint
+    response = client.post("/api/auth/password/reset", json={"user_id": str(user_id_to_reset)})
+
+    # Assert
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+    mock_auth_service.reset_password.assert_awaited_once_with(user_id_to_reset)
+
+
+def test_change_password(client, mock_auth_service, mock_get_current_user, normal_user_data):
+    # Setup mocks
+    mock_auth_service.change_password.return_value = True
+
+    # Call endpoint
+    response = client.post("/api/auth/password/change", json={"old_password": "old", "new_password": "new"})
+    
+    # Assert
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+    mock_auth_service.change_password.assert_awaited_once_with(
+        user_id=normal_user_data.id,
+        old_password="old",
+        new_password="new",
+    )
 
 def test_create_user(authenticated_manager_client: TestClient):
     """
@@ -73,6 +228,7 @@ def test_login_failure_wrong_email(client: TestClient):
         data={"username": "nouser@example.com", "password": "somepassword"}
     )
     assert response.status_code == 401, response.text
+
 
 def test_full_user_workflow(
     client: TestClient,

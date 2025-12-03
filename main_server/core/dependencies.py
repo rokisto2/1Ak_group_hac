@@ -70,14 +70,14 @@ async def get_email_scheduler(
         EmailScheduleSend: Планировщик отправки электронной почты
     """
     global _email_scheduler
-    # if _email_scheduler is None:
-    #     _email_scheduler = EmailScheduleSend(
-    #         scheduler_service=scheduler_service,
-    #         credentials_file=secret_settings.EMAIL_CREDENTIALS_FILE,
-    #         app_email=secret_settings.EMAIL_APP_ADDRESS,
-    #         app_name=secret_settings.EMAIL_APP_NAME,
-    #         token_file=secret_settings.EMAIL_TOKEN_PATH
-    #     )
+    if _email_scheduler is None:
+        _email_scheduler = EmailScheduleSend(
+            scheduler_service=scheduler_service,
+            credentials_file=secret_settings.EMAIL_CREDENTIALS_FILE,
+            app_email=secret_settings.EMAIL_APP_ADDRESS,
+            app_name=secret_settings.EMAIL_APP_NAME,
+            token_file=secret_settings.EMAIL_TOKEN_PATH
+        )
     return _email_scheduler
 
 
