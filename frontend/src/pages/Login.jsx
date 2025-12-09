@@ -5,6 +5,8 @@ import {
     FormErrorMessage, useToast, InputGroup, InputRightElement,
 } from "@chakra-ui/react";
 import {getApiUrl} from "../utils/api.js";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 function Login() {
     const [email, setEmail] = useState('');
@@ -14,11 +16,12 @@ function Login() {
     const [errors, setErrors] = useState({});
     const toast = useToast();
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     const validateForm = () => {
         const newErrors = {};
-        if (!email) newErrors.email = "Email is required";
-        if (!password) newErrors.password = "Password is required";
+        if (!email) newErrors.email = t('login.emailRequired');
+        if (!password) newErrors.password = t('login.passwordRequired');
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -51,8 +54,8 @@ function Login() {
             localStorage.setItem("userId", data.user_id);
 
             toast({
-                title: "Login Successful",
-                description: `You've been authenticated as ${data.role}`,
+                title: t('login.loginSuccess'),
+                description: t('login.loginSuccessDescription', { role: data.role }),
                 status: "success",
                 duration: 3000,
                 isClosable: true,
@@ -75,8 +78,8 @@ function Login() {
         } catch (error) {
             console.error("Login error:", error);
             toast({
-                title: "Login Failed",
-                description: error.message || "Authentication failed. Please check your credentials.",
+                title: t('login.loginFailed'),
+                description: error.message || t('login.loginFailedDescription'),
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -89,14 +92,17 @@ function Login() {
     return (
         <Box width="100%" maxWidth="400px" mx="auto" mt={8}>
             <VStack spacing={8} align="stretch">
-                <Heading textAlign="center">Логин</Heading>
+                <Box display="flex" justifyContent="flex-end">
+                    <LanguageSwitcher />
+                </Box>
+                <Heading textAlign="center">{t('login.title')}</Heading>
                 <form onSubmit={handleSubmit}>
                     <VStack spacing={4}>
                         <FormControl isInvalid={errors.email}>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>{t('login.email')}</FormLabel>
                             <Input
                                 type="email"
-                                placeholder="Введите почту"
+                                placeholder={t('login.emailPlaceholder')}
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
@@ -104,11 +110,11 @@ function Login() {
                         </FormControl>
 
                         <FormControl isInvalid={errors.password}>
-                            <FormLabel>Пароль</FormLabel>
+                            <FormLabel>{t('login.password')}</FormLabel>
                             <InputGroup>
                                 <Input
                                     type={showPassword ? "text" : "password"}
-                                    placeholder="Введите пароль"
+                                    placeholder={t('login.passwordPlaceholder')}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
@@ -118,7 +124,7 @@ function Login() {
                                         size="sm"
                                         onClick={() => setShowPassword(!showPassword)}
                                     >
-                                        {showPassword ? "Скрыть" : "Показать"}
+                                        {showPassword ? t('login.hidePassword') : t('login.showPassword')}
                                     </Button>
                                 </InputRightElement>
                             </InputGroup>
@@ -132,7 +138,7 @@ function Login() {
                             type="submit"
                             isLoading={isLoading}
                         >
-                             Вход
+                             {t('login.loginButton')}
                         </Button>
                     </VStack>
                 </form>

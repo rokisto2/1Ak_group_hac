@@ -10,6 +10,7 @@ import {
 import {EditIcon, LockIcon, RepeatIcon, UnlockIcon} from "@chakra-ui/icons";
 import Navbar from "../components/Navbar";
 import {getApiUrl} from "../utils/api.js";
+import {useTranslation} from "react-i18next";
 
 function ManagerDashboard() {
     const [users, setUsers] = useState([]);
@@ -21,6 +22,7 @@ function ManagerDashboard() {
     });
     const [isLoading, setIsLoading] = useState(false);
     const toast = useToast();
+    const { t } = useTranslation();
     const [newRole, setNewRole] = useState("");
     const {isOpen, onOpen, onClose} = useDisclosure();
     const {
@@ -51,14 +53,14 @@ function ManagerDashboard() {
                 }
             );
 
-            if (!response.ok) throw new Error("Не удалось получить список пользователей");
+            if (!response.ok) throw new Error(t('managerDashboard.errorFetchingUsers'));
 
             const data = await response.json();
             setUsers(data.users);
             setPagination(data.pagination);
         } catch (error) {
             toast({
-                title: "Ошибка",
+                title: t('managerDashboard.error'),
                 description: error.message,
                 status: "error",
                 duration: 3000,
@@ -97,7 +99,7 @@ function ManagerDashboard() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.detail || "Не удалось создать пользователя");
+                throw new Error(errorData.detail || t('managerDashboard.errorCreatingUser'));
             }
 
             // Reset form and refresh list
@@ -105,15 +107,15 @@ function ManagerDashboard() {
             fetchUsers();
 
             toast({
-                title: "Пользователь создан",
-                description: "Новый пользователь успешно создан",
+                title: t('managerDashboard.userCreated'),
+                description: t('managerDashboard.userCreatedDescription'),
                 status: "success",
                 duration: 3000,
                 isClosable: true
             });
         } catch (error) {
             toast({
-                title: "Ошибка создания пользователя",
+                title: t('managerDashboard.error'),
                 description: error.message,
                 status: "error",
                 duration: 3000,
@@ -137,20 +139,20 @@ function ManagerDashboard() {
                 body: JSON.stringify({ user_id: userForPasswordReset.id })
             });
 
-            if (!response.ok) throw new Error("Не удалось сбросить пароль");
+            if (!response.ok) throw new Error(t('managerDashboard.errorResettingPassword'));
 
             onResetPasswordClose();
 
             toast({
-                title: "Пароль сброшен",
-                description: "Новый пароль отправлен на почту пользователя",
+                title: t('managerDashboard.passwordReset'),
+                description: t('managerDashboard.passwordResetDescription'),
                 status: "success",
                 duration: 3000,
                 isClosable: true
             });
         } catch (error) {
             toast({
-                title: "Ошибка",
+                title: t('managerDashboard.error'),
                 description: error.message,
                 status: "error",
                 duration: 3000,
@@ -173,23 +175,23 @@ function ManagerDashboard() {
                 })
             });
 
-            if (!response.ok) throw new Error("Не удалось изменить статус пользователя");
+            if (!response.ok) throw new Error(t('managerDashboard.errorChangingStatus'));
 
             // Refresh user list
             fetchUsers();
 
             toast({
-                title: currentBanStatus ? "Пользователь разблокирован" : "Пользователь заблокирован",
+                title: currentBanStatus ? t('managerDashboard.userUnblocked') : t('managerDashboard.userBlocked'),
                 description: currentBanStatus
-                    ? "Пользователь успешно разблокирован"
-                    : "Пользователь успешно заблокирован",
+                    ? t('managerDashboard.userUnblockedDescription')
+                    : t('managerDashboard.userBlockedDescription'),
                 status: "success",
                 duration: 3000,
                 isClosable: true
             });
         } catch (error) {
             toast({
-                title: "Ошибка",
+                title: t('managerDashboard.error'),
                 description: error.message,
                 status: "error",
                 duration: 3000,
@@ -217,22 +219,22 @@ function ManagerDashboard() {
                 body: JSON.stringify({role: newRole})
             });
 
-            if (!response.ok) throw new Error("Не удалось изменить роль пользователя");
+            if (!response.ok) throw new Error(t('managerDashboard.errorChangingRole'));
 
             // Refresh user list and close modal
             fetchUsers();
             onClose();
 
             toast({
-                title: "Роль обновлена",
-                description: `Роль пользователя изменена на ${newRole}`,
+                title: t('managerDashboard.roleChanged'),
+                description: t('managerDashboard.roleChangedDescription'),
                 status: "success",
                 duration: 3000,
                 isClosable: true
             });
         } catch (error) {
             toast({
-                title: "Ошибка",
+                title: t('managerDashboard.error'),
                 description: error.message,
                 status: "error",
                 duration: 3000,
@@ -243,10 +245,10 @@ function ManagerDashboard() {
 
     return (
         <Box width="100%" height="100vh" display="flex" flexDirection="column">
-            <Navbar title="Панель менеджера"/>
+            <Navbar title={t('managerDashboard.title')}/>
             <Box p={5} flex="1" overflowY="auto">
-                <Heading mb={4}>Панель менеджера</Heading>
-                <Text mb={6}>Управление пользователями и их правами доступа.</Text>
+                <Heading mb={4}>{t('managerDashboard.title')}</Heading>
+                <Text mb={6}>{t('managerDashboard.welcome')}</Text>
 
                 <Tabs isFitted variant="enclosed">
                     <TabList mb="1em">
@@ -265,7 +267,7 @@ function ManagerDashboard() {
                             px={6}
                             py={3}
                         >
-                            Список пользователей
+                            {t('managerDashboard.usersList')}
                         </Tab>
                         <Tab
                             _selected={{
@@ -282,7 +284,7 @@ function ManagerDashboard() {
                             px={6}
                             py={3}
                         >
-                            Создать пользователя
+                            {t('managerDashboard.createUser')}
                         </Tab>
                     </TabList>
                     <TabPanels>
@@ -291,7 +293,7 @@ function ManagerDashboard() {
                             <Box mb={4}>
                                 <HStack spacing={4} mb={4}>
                                     <FormControl maxW="250px">
-                                        <FormLabel>Пользователей на странице:</FormLabel>
+                                        <FormLabel>{t("managerDashboard.usersPerPage")}</FormLabel>
                                         <Select
                                             value={pagination.per_page}
                                             onChange={(e) => setPagination({
@@ -312,11 +314,11 @@ function ManagerDashboard() {
                             <Table variant="simple">
                                 <Thead>
                                     <Tr>
-                                        <Th>Имя</Th>
-                                        <Th>Email</Th>
-                                        <Th>Роль</Th>
-                                        <Th>Статус</Th>
-                                        <Th>Действия</Th>
+                                        <Th>{t('managerDashboard.name')}</Th>
+                                        <Th>{t('managerDashboard.email')}</Th>
+                                        <Th>{t('managerDashboard.role')}</Th>
+                                        <Th>{t('managerDashboard.status')}</Th>
+                                        <Th>{t('managerDashboard.actions')}</Th>
                                     </Tr>
                                 </Thead>
                                 <Tbody>
@@ -331,37 +333,32 @@ function ManagerDashboard() {
                                                 </Badge>
                                             </Td>
                                             <Td>
-                                                <Badge
-                                                    colorScheme={user.is_banned ? "red" : "green"}
-                                                    minWidth="110px"
-                                                    textAlign="center"
-                                                    display="block"
-                                                >
-                                                    {user.is_banned ? "Заблокирован" : "Активен"}
+                                                <Badge colorScheme={user.is_banned ? "red" : "green"}>
+                                                    {user.is_banned ? t('managerDashboard.blocked') : t('managerDashboard.active')}
                                                 </Badge>
                                             </Td>
                                             <Td>
                                                 <HStack spacing={2}>
-                                                    <Tooltip label="Изменить роль" hasArrow>
+                                                    <Tooltip label={t("managerDashboard.tooltipChangeRole")} hasArrow>
                                                         <IconButton
-                                                            aria-label="Изменить роль"
+                                                            aria-label={t("managerDashboard.tooltipChangeRole")}
                                                             icon={<EditIcon/>}
                                                             size="sm"
                                                             onClick={() => openRoleChangeModal(user)}
                                                         />
                                                     </Tooltip>
-                                                    <Tooltip label={user.is_banned ? "Разблокировать" : "Заблокировать"} hasArrow>
+                                                    <Tooltip label={user.is_banned ? t("managerDashboard.tooltipUnblock") : t("managerDashboard.tooltipBlock")  } hasArrow>
                                                         <IconButton
-                                                            aria-label={user.is_banned ? "Разблокировать" : "Заблокировать"}
+                                                            aria-label={user.is_banned ? t("managerDashboard.tooltipUnblock")  : t("managerDashboard.tooltipBlock")}
                                                             icon={user.is_banned ? <UnlockIcon/> : <LockIcon/>}
                                                             colorScheme={user.is_banned ? "green" : "red"}
                                                             size="sm"
                                                             onClick={() => handleToggleBanStatus(user.id, user.is_banned)}
                                                         />
                                                     </Tooltip>
-                                                    <Tooltip label="Сбросить пароль" hasArrow>
+                                                    <Tooltip label={t('managerDashboard.tooltipResetPassword')} hasArrow>
                                                         <IconButton
-                                                            aria-label="Сбросить пароль"
+                                                            aria-label={t('managerDashboard.tooltipResetPassword')}
                                                             icon={<RepeatIcon/>}
                                                             colorScheme="orange"
                                                             size="sm"
@@ -378,7 +375,7 @@ function ManagerDashboard() {
                             {/* Pagination controls */}
                             <Flex justifyContent="space-between" mt={4}>
                                 <Text>
-                                    Показано {users.length} из {pagination.total} пользователей
+                                    {""}
                                 </Text>
                                 <HStack spacing={2}>
                                     <Button
@@ -386,17 +383,17 @@ function ManagerDashboard() {
                                         onClick={() => setPagination({...pagination, page: pagination.page - 1})}
                                         isDisabled={!pagination.has_prev || isLoading}
                                     >
-                                        Предыдущая
+                                        {t('managerDashboard.previous')}
                                     </Button>
                                     <Text>
-                                        Страница {pagination.page} из {pagination.total_pages}
+                                        {t('managerDashboard.page')} {pagination.page} {t('managerDashboard.of')} {pagination.total_pages}
                                     </Text>
                                     <Button
                                         size="sm"
                                         onClick={() => setPagination({...pagination, page: pagination.page + 1})}
                                         isDisabled={!pagination.has_next || isLoading}
                                     >
-                                        Следующая
+                                        {t('managerDashboard.next')}
                                     </Button>
                                 </HStack>
                             </Flex>
@@ -407,7 +404,7 @@ function ManagerDashboard() {
                             <Box as="form" onSubmit={handleCreateUser} data-testid="create-user-form">
                                 <Stack spacing={4}>
                                     <FormControl isRequired>
-                                        <FormLabel>Email</FormLabel>
+                                        <FormLabel>{t('managerDashboard.email')}</FormLabel>
                                         <Input
                                             type="email"
                                             value={newUser.email}
@@ -416,7 +413,7 @@ function ManagerDashboard() {
                                     </FormControl>
 
                                     <FormControl isRequired>
-                                        <FormLabel>Полное имя</FormLabel>
+                                        <FormLabel>{t('managerDashboard.fullName')}</FormLabel>
                                         <Input
                                             value={newUser.full_name}
                                             onChange={(e) => setNewUser({...newUser, full_name: e.target.value})}
@@ -424,13 +421,13 @@ function ManagerDashboard() {
                                     </FormControl>
 
                                     <FormControl isRequired>
-                                        <FormLabel>Роль</FormLabel>
+                                        <FormLabel>{t('managerDashboard.role')}</FormLabel>
                                         <Select
                                             value={newUser.role}
                                             onChange={(e) => setNewUser({...newUser, role: e.target.value})}
                                         >
-                                            <option value="user">Пользователь</option>
-                                            <option value="superuser">Суперпользователь</option>
+                                            <option value="user">{t('managerDashboard.user')}</option>
+                                            <option value="superuser">{t('managerDashboard.superuser')}</option>
                                         </Select>
                                     </FormControl>
 
@@ -439,7 +436,7 @@ function ManagerDashboard() {
                                         colorScheme="blue"
                                         isLoading={isLoading}
                                     >
-                                        Создать пользователя
+                                        {t('managerDashboard.createUserButton')}
                                     </Button>
                                 </Stack>
                             </Box>
@@ -452,27 +449,27 @@ function ManagerDashboard() {
             <Modal isOpen={isOpen} onClose={onClose}>
                 <ModalOverlay/>
                 <ModalContent>
-                    <ModalHeader>Изменить роль пользователя</ModalHeader>
+                    <ModalHeader>{t('managerDashboard.changeUserRole')}</ModalHeader>
                     <ModalCloseButton/>
                     <ModalBody>
                         {selectedUser && (
                             <FormControl>
-                                <FormLabel>Роль для {selectedUser.full_name}</FormLabel>
+                                <FormLabel>{t('managerDashboard.newRole')} {selectedUser.full_name}</FormLabel>
                                 <Select
                                     value={newRole}
                                     onChange={(e) => setNewRole(e.target.value)}
                                 >
-                                    <option value="user">Пользователь</option>
-                                    <option value="superuser">Суперпользователь</option>
+                                    <option value="user">{t('managerDashboard.user')}</option>
+                                    <option value="superuser">{t('managerDashboard.superuser')}</option>
                                 </Select>
                             </FormControl>
                         )}
                     </ModalBody>
                     <ModalFooter>
                         <Button colorScheme="blue" mr={3} onClick={handleRoleChange}>
-                            Сохранить
+                            {t('managerDashboard.save')}
                         </Button>
-                        <Button variant="ghost" onClick={onClose}>Отмена</Button>
+                        <Button variant="ghost" onClick={onClose}>{t('managerDashboard.cancel')}</Button>
                     </ModalFooter>
                 </ModalContent>
             </Modal>
@@ -482,21 +479,20 @@ function ManagerDashboard() {
             <Modal isOpen={isResetPasswordOpen} onClose={onResetPasswordClose}>
                 <ModalOverlay/>
                 <ModalContent>
-                    <ModalHeader>Подтверждение сброса пароля</ModalHeader>
+                    <ModalHeader>{t('managerDashboard.confirmPasswordReset')}</ModalHeader>
                     <ModalCloseButton/>
                     <ModalBody>
                         {userForPasswordReset && (
                             <Text>
-                                Вы уверены, что хотите сбросить пароль для пользователя <b>{userForPasswordReset.full_name}</b>?
-                                Новый пароль будет отправлен на email: <b>{userForPasswordReset.email}</b>.
+                                {t('managerDashboard.confirmPasswordResetText', { email: userForPasswordReset.email })}
                             </Text>
                         )}
                     </ModalBody>
                     <ModalFooter>
                         <Button colorScheme="red" mr={3} onClick={handleResetPassword}>
-                            Сбросить пароль
+                            {t('managerDashboard.resetPassword')}
                         </Button>
-                        <Button variant="ghost" onClick={onResetPasswordClose}>Отмена</Button>
+                        <Button variant="ghost" onClick={onResetPasswordClose}>{t('managerDashboard.cancel')}</Button>
                     </ModalFooter>
                 </ModalContent>
             </Modal>
