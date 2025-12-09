@@ -404,7 +404,7 @@ function ManagerDashboard() {
 
                         {/* Create User Panel */}
                         <TabPanel>
-                            <Box as="form" onSubmit={handleCreateUser}>
+                            <Box as="form" onSubmit={handleCreateUser} data-testid="create-user-form">
                                 <Stack spacing={4}>
                                     <FormControl isRequired>
                                         <FormLabel>Email</FormLabel>

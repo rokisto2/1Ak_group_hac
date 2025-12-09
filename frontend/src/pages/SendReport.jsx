@@ -28,9 +28,9 @@ function SendReport() {
     const [usersPerPage] = useState(10);
 
     useEffect(() => {
-        fetchUsers();
-        fetchReportDetails();
-    }, []);
+    fetchUsers(userCurrentPage);
+    fetchReportDetails();
+    }, [userCurrentPage]);
 
 
     const CheckboxWithSync = ({ userId, deliveryMethod, selectedUsers, onChange }) => {
@@ -117,15 +117,15 @@ function SendReport() {
     const [selectAllState, setSelectAllState] = useState({});
 
     useEffect(() => {
-        const updatedSelectAllState = {};
-        deliverySystems.forEach((system) => {
-            updatedSelectAllState[system.id] = users.every(
-                (user) =>
-                    selectedUsers[user.id] &&
-                    selectedUsers[user.id].includes(system.id)
-            );
-        });
-        setSelectAllState(updatedSelectAllState);
+    const updatedSelectAllState = {};
+    deliverySystems.forEach((system) => {
+        updatedSelectAllState[system.id] = users.length > 0 && users.every(
+            (user) =>
+                selectedUsers[user.id] &&
+                selectedUsers[user.id].includes(system.id)
+        );
+    });
+    setSelectAllState(updatedSelectAllState);
     }, [selectedUsers, users]);
 
     const handleSelectAll = (deliveryMethod, isChecked) => {
@@ -234,6 +234,9 @@ function SendReport() {
     return (
         <Box width="100%" height="100vh" display="flex" flexDirection="column">
             <Navbar title="Отправка отчета" />
+            <div data-testid="selected-users" style={{ display: "none" }}>
+                {JSON.stringify(selectedUsers)}
+            </div>
             <Box p={5} flex="1" overflowY="auto">
                 <HStack mb={4} spacing={4}>
                     <Button variant="outline" onClick={() => navigate('/admin-dashboard')}>
