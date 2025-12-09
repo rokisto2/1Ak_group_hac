@@ -1,9 +1,11 @@
 // src/pages/NotFound.jsx
 import { Box, Heading, Text, Button } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 function NotFound() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     return (
         <Box textAlign="center" py={10} px={6}>
@@ -17,10 +19,10 @@ function NotFound() {
                 404
             </Heading>
             <Text fontSize="18px" mt={3} mb={2}>
-                Page Not Found
+                {t('notFound.title')}
             </Text>
             <Text color="gray.500" mb={6}>
-                The page you're looking for doesn't exist or has been moved.
+                {t('notFound.message')}
             </Text>
 
             <Button
@@ -29,7 +31,7 @@ function NotFound() {
                 color="white"
                 onClick={() => navigate('/')}
             >
-                Go to Home
+                {t('notFound.backToLogin')}
             </Button>
         </Box>
     );
