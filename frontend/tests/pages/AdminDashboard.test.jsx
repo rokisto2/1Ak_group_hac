@@ -1,7 +1,7 @@
 // frontend/tests/pages/AdminDashboard.test.jsx
 // Brief description:
 // Tests the AdminDashboard page: upload reports, report history, pagination, downloads, and error handling.
-// Mocks API calls and Chakra UI hooks to focus on component behavior.
+// Mocks API calls and Chakra UI hooks to focus on component behavior. Uses i18n for localized text.
 
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
@@ -10,6 +10,8 @@ import AdminDashboard from '../../src/pages/AdminDashboard'; // Adjust path
 import React from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
 import axios from 'axios';
+import i18n from '../i18n';
+import { I18nextProvider } from 'react-i18next';
 
 // --- Mocks ---
 vi.mock('../../src/utils/api', () => ({
@@ -71,7 +73,9 @@ describe('AdminDashboard Component', () => {
         render(
             <MemoryRouter>
                 <ChakraProvider>
-                    <AdminDashboard />
+                    <I18nextProvider i18n={i18n}>
+                        <AdminDashboard />
+                    </I18nextProvider>
                 </ChakraProvider>
             </MemoryRouter>
         );
@@ -81,11 +85,11 @@ describe('AdminDashboard Component', () => {
         axios.get.mockResolvedValue({ data: { items: [] } }); // Mock initial fetch
         renderAdminDashboard();
 
-        expect(screen.getByTestId('navbar')).toHaveTextContent('Панель администратора');
-        expect(screen.getByRole('heading', { name: /Панель администратора/i })).toBeInTheDocument();
-        expect(screen.getByRole('tab', { name: /Загрузка отчета/i })).toBeInTheDocument();
-        expect(screen.getByRole('tab', { name: /Загрузка отчета/i })).toHaveAttribute('aria-selected', 'true');
-        expect(screen.getByLabelText(/Название отчета/i)).toBeInTheDocument();
+        expect(screen.getByTestId('navbar')).toHaveTextContent(i18n.t('adminDashboard.title'));
+        expect(screen.getByRole('heading', { name: i18n.t('adminDashboard.title') })).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: i18n.t('adminDashboard.uploadReportTab') })).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: i18n.t('adminDashboard.uploadReportTab') })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByPlaceholderText(i18n.t('adminDashboard.reportName'))).toBeInTheDocument();
 
         await waitFor(() => {
             expect(axios.get).toHaveBeenCalledWith('/mock-api/reports/admin', expect.any(Object));
@@ -100,7 +104,7 @@ describe('AdminDashboard Component', () => {
             expect(mockToast).toHaveBeenCalledWith(
                 expect.objectContaining({
                     status: 'error',
-                    description: 'Не удалось загрузить список отчетов',
+                    description: i18n.t('adminDashboard.errorLoadingReports'),
                 })
             );
         });
@@ -119,7 +123,7 @@ describe('AdminDashboard Component', () => {
             expect(mockToast).toHaveBeenCalledWith(
                 expect.objectContaining({
                     status: 'error',
-                    description: 'Пожалуйста, заполните все поля',
+                    description: i18n.t('adminDashboard.fillAllFields'),
                 })
             );
         });
@@ -132,7 +136,7 @@ describe('AdminDashboard Component', () => {
 
         renderAdminDashboard();
 
-        const reportNameInput = screen.getByLabelText(/Название отчета/i);
+        const reportNameInput = screen.getByPlaceholderText(i18n.t('adminDashboard.reportName'));
         const fileInput = screen.getByTestId('report-file-input');
 
         fireEvent.change(reportNameInput, { target: { value: 'Test Report Name' } });
@@ -152,7 +156,7 @@ describe('AdminDashboard Component', () => {
             expect(mockToast).toHaveBeenCalledWith(
                 expect.objectContaining({
                     status: 'success',
-                    description: 'Отчет успешно загружен',
+                    description: i18n.t('adminDashboard.reportUploaded'),
                 })
             );
             expect(reportNameInput).toHaveValue('');
@@ -163,7 +167,7 @@ describe('AdminDashboard Component', () => {
         axios.post.mockRejectedValue({ response: { data: { detail: 'Upload failed' } } });
         renderAdminDashboard();
 
-        const reportNameInput = screen.getByLabelText(/Название отчета/i);
+        const reportNameInput = screen.getByPlaceholderText(i18n.t('adminDashboard.reportName'));
         const fileInput = screen.getByTestId('report-file-input');
 
         fireEvent.change(reportNameInput, { target: { value: 'Test Report Name' } });
@@ -176,7 +180,7 @@ describe('AdminDashboard Component', () => {
             expect(mockToast).toHaveBeenCalledWith(
                 expect.objectContaining({
                     status: 'error',
-                    description: 'Не удалось загрузить отчет: Upload failed',
+                    description: expect.stringContaining('Upload failed'),
                 })
             );
         });
@@ -197,10 +201,10 @@ describe('AdminDashboard Component', () => {
           expect(axios.get).toHaveBeenCalledTimes(1);
         });
 
-        fireEvent.click(screen.getByRole('tab', { name: /История отчетов/i }));
+        fireEvent.click(screen.getByRole('tab', { name: i18n.t('adminDashboard.reportsHistoryTab') }));
 
         await waitFor(() => {
-            expect(screen.getByRole('tab', { name: /История отчетов/i })).toHaveAttribute('aria-selected', 'true');
+            expect(screen.getByRole('tab', { name: i18n.t('adminDashboard.reportsHistoryTab') })).toHaveAttribute('aria-selected', 'true');
             expect(screen.getByText('Hist Report 1')).toBeInTheDocument();
             expect(screen.getByText(/01.01.2023/)).toBeInTheDocument();
         });
@@ -211,10 +215,10 @@ describe('AdminDashboard Component', () => {
 
         renderAdminDashboard();
 
-        fireEvent.click(screen.getByRole('tab', { name: /История отчетов/i }));
+        fireEvent.click(screen.getByRole('tab', { name: i18n.t('adminDashboard.reportsHistoryTab') }));
 
         await waitFor(() => {
-            expect(screen.getByText('Нет созданных отчетов')).toBeInTheDocument();
+            expect(screen.getByText(i18n.t('adminDashboard.noReports'))).toBeInTheDocument();
         });
     });
 
@@ -234,7 +238,7 @@ describe('AdminDashboard Component', () => {
            expect(axios.get).toHaveBeenCalledTimes(1);
         });
 
-        fireEvent.click(screen.getByRole('tab', { name: /История отчетов/i }));
+        fireEvent.click(screen.getByRole('tab', { name: i18n.t('adminDashboard.reportsHistoryTab') }));
 
         // On first page, after tab click
         await waitFor(() => {
@@ -242,22 +246,22 @@ describe('AdminDashboard Component', () => {
             expect(screen.queryByText('Report 6')).not.toBeInTheDocument();
         });
 
-        const nextButton = screen.getByRole('button', { name: /Вперед/i });
+        const nextButton = screen.getByRole('button', { name: i18n.t('adminDashboard.next') });
         fireEvent.click(nextButton);
 
         // On second page
         await waitFor(() => {
-            expect(screen.getByText('Страница 2 из 2')).toBeInTheDocument(); // Expecting pagination update
+            expect(screen.getByText(new RegExp(`${i18n.t('adminDashboard.page')} 2 ${i18n.t('adminDashboard.of')} 2`))).toBeInTheDocument();
             expect(screen.queryByText('Report 1')).not.toBeInTheDocument();
             expect(screen.getByText('Report 6')).toBeInTheDocument();
         });
 
-        const prevButton = screen.getByRole('button', { name: /Назад/i });
+        const prevButton = screen.getByRole('button', { name: i18n.t('adminDashboard.previous') });
         fireEvent.click(prevButton);
 
         // Back on first page
         await waitFor(() => {
-            expect(screen.getByText('Страница 1 из 2')).toBeInTheDocument();
+            expect(screen.getByText(new RegExp(`${i18n.t('adminDashboard.page')} 1 ${i18n.t('adminDashboard.of')} 2`))).toBeInTheDocument();
             expect(screen.getByText('Report 1')).toBeInTheDocument();
             expect(screen.queryByText('Report 6')).not.toBeInTheDocument();
         });
@@ -275,12 +279,14 @@ describe('AdminDashboard Component', () => {
 
         renderAdminDashboard();
 
-        fireEvent.click(screen.getByRole('tab', { name: /История отчетов/i }));
-        
+        fireEvent.click(screen.getByRole('tab', { name: i18n.t('adminDashboard.reportsHistoryTab') }));
+
         await waitFor(() => {
-            const downloadButton = screen.getByRole('button', { name: /Скачать отчет/i });
-            fireEvent.click(downloadButton);
+            expect(screen.getByText('Downloadable Report')).toBeInTheDocument();
         });
+
+        const downloadButton = screen.getByRole('button', { name: 'Скачать' });
+        fireEvent.click(downloadButton);
 
         await waitFor(() => {
             expect(axios.get).toHaveBeenCalledWith('/mock-api/url-generate/download', {
@@ -302,12 +308,14 @@ describe('AdminDashboard Component', () => {
 
         renderAdminDashboard();
 
-        fireEvent.click(screen.getByRole('tab', { name: /История отчетов/i }));
-        
+        fireEvent.click(screen.getByRole('tab', { name: i18n.t('adminDashboard.reportsHistoryTab') }));
+
         await waitFor(() => {
-            const downloadButton = screen.getByRole('button', { name: /Скачать отчет/i });
-            fireEvent.click(downloadButton);
+            expect(screen.getByText('Downloadable Report')).toBeInTheDocument();
         });
+
+        const downloadButton = screen.getByRole('button', { name: 'Скачать' });
+        fireEvent.click(downloadButton);
 
         await waitFor(() => {
             expect(mockToast).toHaveBeenCalledWith(

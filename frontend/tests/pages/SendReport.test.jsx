@@ -1,4 +1,8 @@
 // frontend/tests/pages/SendReport.test.jsx
+// Brief description:
+// Tests for SendReport component: validates report sending functionality, recipient selection,
+// delivery methods, and error handling. Uses i18n for localized text.
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -6,6 +10,8 @@ import SendReport from '../../src/pages/SendReport';
 import React from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
 import axios from 'axios';
+import i18n from '../i18n';
+import { I18nextProvider } from 'react-i18next';
 
 // Mock axios
 vi.mock('axios');
@@ -54,18 +60,20 @@ describe('SendReport Component', () => {
     const renderSendReport = () =>
         render(
             <ChakraProvider>
-                <MemoryRouter initialEntries={['/send-report/1']}>
-                    <Routes>
-                        <Route path="/send-report/:reportId" element={<SendReport />} />
-                    </Routes>
-                </MemoryRouter>
+                <I18nextProvider i18n={i18n}>
+                    <MemoryRouter initialEntries={['/send-report/1']}>
+                        <Routes>
+                            <Route path="/send-report/:reportId" element={<SendReport />} />
+                        </Routes>
+                    </MemoryRouter>
+                </I18nextProvider>
             </ChakraProvider>
         );
 
     it('renders the component and fetches users', async () => {
         renderSendReport();
 
-        const headings = screen.getAllByRole('heading', { name: /Отправка отчета/i });
+        const headings = screen.getAllByRole('heading', { name: i18n.t('sendReport.title') });
         expect(headings.length).toBeGreaterThan(0);
         
         await waitFor(() => {
@@ -85,7 +93,7 @@ describe('SendReport Component', () => {
             expect(mockToast).toHaveBeenCalledWith(
                 expect.objectContaining({
                     status: 'error',
-                    description: 'Не удалось загрузить список пользователей',
+                    description: i18n.t('sendReport.errorLoadingUsers'),
                 })
             );
         });
@@ -121,7 +129,7 @@ describe('SendReport Component', () => {
             expect(screen.getByText('User One')).toBeInTheDocument();
         });
     
-        const emailHeader = screen.getByText('Электронная почта');
+        const emailHeader = screen.getByText(i18n.t('sendReport.deliveryEmail'));
         const selectAllEmail = emailHeader.parentElement.querySelector('input[type="checkbox"]');
         fireEvent.click(selectAllEmail);
     
@@ -155,7 +163,7 @@ describe('SendReport Component', () => {
         const emailCheckbox = userOneRow.querySelectorAll('input[type="checkbox"]')[0];
         fireEvent.click(emailCheckbox);
     
-        const sendButton = screen.getByRole('button', { name: /Отправить отчет/i });
+        const sendButton = screen.getByRole('button', { name: i18n.t('sendReport.sendButton') });
         fireEvent.click(sendButton);
     
         await waitFor(() => {
@@ -171,7 +179,7 @@ describe('SendReport Component', () => {
     
         await waitFor(() => {
             expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
-                title: 'Успешно',
+                title: i18n.t('sendReport.success'),
                 status: 'success'
             }));
             expect(mockNavigate).toHaveBeenCalledWith('/admin-dashboard');
@@ -184,7 +192,7 @@ describe('SendReport Component', () => {
             expect(screen.getByText('User One')).toBeInTheDocument();
         });
 
-        const sendButton = screen.getByRole('button', { name: /Отправить отчет/i });
+        const sendButton = screen.getByRole('button', { name: i18n.t('sendReport.sendButton') });
         expect(sendButton).toBeDisabled();
     });
 
@@ -200,12 +208,12 @@ describe('SendReport Component', () => {
         const user1_email_checkbox = screen.getAllByRole('checkbox')[1];
         fireEvent.click(user1_email_checkbox);
 
-        const sendButton = screen.getByRole('button', { name: /Отправить отчет/i });
+        const sendButton = screen.getByRole('button', { name: i18n.t('sendReport.sendButton') });
         fireEvent.click(sendButton);
 
         await waitFor(() => {
             expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
-                title: 'Ошибка',
+                title: i18n.t('sendReport.error'),
                 description: 'Failed to send',
                 status: 'error'
             }));

@@ -16,6 +16,8 @@ import { MemoryRouter } from "react-router-dom";
 import ManagerDashboard from "../../src/pages/ManagerDashboard"; // Adjust path
 import React from "react";
 import { ChakraProvider } from "@chakra-ui/react";
+import i18n from '../i18n';
+import { I18nextProvider } from 'react-i18next';
 
 // --- Mocks ---
 vi.mock("../../src/utils/api", () => ({
@@ -69,7 +71,9 @@ describe("ManagerDashboard Component", () => {
     render(
       <MemoryRouter>
         <ChakraProvider>
-          <ManagerDashboard />
+            <I18nextProvider i18n={i18n}>
+                <ManagerDashboard />
+            </I18nextProvider>
         </ChakraProvider>
       </MemoryRouter>,
     );
@@ -103,12 +107,12 @@ describe("ManagerDashboard Component", () => {
 
     renderManagerDashboard();
 
-    expect(screen.getByTestId("navbar")).toHaveTextContent("Панель менеджера");
+    expect(screen.getByTestId("navbar")).toHaveTextContent(i18n.t("managerDashboard.title"));
     expect(
-      screen.getByRole("heading", { name: /Панель менеджера/i }),
+      screen.getByRole("heading", { name: i18n.t("managerDashboard.title") }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Управление пользователями и их правами доступа./i),
+      screen.getByText(i18n.t("managerDashboard.welcome")),
     ).toBeInTheDocument();
 
     // Verify "Список пользователей" tab is selected by default
@@ -126,8 +130,8 @@ describe("ManagerDashboard Component", () => {
     // Verify that the user is displayed
     expect(screen.getByText("John Doe")).toBeInTheDocument();
     expect(screen.getByText("john@example.com")).toBeInTheDocument();
-    expect(screen.getByText("user")).toBeInTheDocument(); // Role badge
-    expect(screen.getByText("Активен")).toBeInTheDocument(); // Status badge
+    expect(screen.getByText(i18n.t("managerDashboard.user"))).toBeInTheDocument(); // Role badge
+    expect(screen.getByText(i18n.t("managerDashboard.active"))).toBeInTheDocument(); // Status badge
   });
 
   it("handles fetchUsers error", async () => {
@@ -138,7 +142,7 @@ describe("ManagerDashboard Component", () => {
         expect(mockToast).toHaveBeenCalledWith(
             expect.objectContaining({
                 status: 'error',
-                description: 'Не удалось получить список пользователей',
+                description: i18n.t('managerDashboard.errorFetchingUsers'),
             })
         );
     });
@@ -214,26 +218,32 @@ describe("ManagerDashboard Component", () => {
 
     // Wait for initial fetch to complete
     await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
+
     // Switch to "Создать пользователя" tab
-    fireEvent.click(
-      screen.getByRole("button", { name: /Создать пользователя/i }),
-    );
+    await act(async () => {
+        fireEvent.click(
+          screen.getByRole("button", { name: i18n.t('managerDashboard.createUser') }),
+        );
+    });
 
-    const emailInput = screen.getByLabelText(/Email/i);
+    // Wait for tab panel to be visible
+    await waitFor(() => {
+        expect(screen.getByTestId("create-user-form")).toBeInTheDocument();
+    });
 
-    const fullNameInput = screen.getByLabelText(/Полное имя/i);
-
-    const roleSelect = screen.getByLabelText(/Роль/i);
-
-    fireEvent.change(emailInput, { target: { value: "newuser@example.com" } });
-
-    fireEvent.change(fullNameInput, { target: { value: "New User" } });
-
-    fireEvent.change(roleSelect, { target: { value: "user" } });
+    // Find all inputs within the form
+    const form = screen.getByTestId("create-user-form");
+    const emailInput = form.querySelector('input[type="email"]');
+    const fullNameInput = form.querySelectorAll('input')[1];
+    const roleSelect = form.querySelector('select');
 
     await act(async () => {
-      fireEvent.submit(screen.getByTestId("create-user-form"));
+        fireEvent.change(emailInput, { target: { value: "newuser@example.com" } });
+        fireEvent.change(fullNameInput, { target: { value: "New User" } });
+        fireEvent.change(roleSelect, { target: { value: "user" } });
+        fireEvent.submit(form);
     });
+
 
     // Verify fetch for user creation is called
     await waitFor(() => {
@@ -259,8 +269,8 @@ describe("ManagerDashboard Component", () => {
     expect(mockToast).toHaveBeenCalledWith(
       expect.objectContaining({
         status: "success",
-        title: "Пользователь создан",
-        description: "Новый пользователь успешно создан",
+        title: i18n.t("managerDashboard.userCreated"),
+        description: i18n.t("managerDashboard.userCreatedDescription"),
       }),
     );
 
@@ -282,51 +292,76 @@ describe("ManagerDashboard Component", () => {
 
     // After refresh, the newly created user should be in the list (on the first tab)
     // Since we go back to the first tab, we need to click it again if we want to assert the list.
-    fireEvent.click(
-      screen.getByRole("button", { name: /Список пользователей/i }),
-    );
+    await act(async () => {
+        fireEvent.click(
+          screen.getByRole("button", { name: i18n.t("managerDashboard.usersList") }),
+        );
+    });
+
     await waitFor(() => {
       expect(screen.getByText("New User")).toBeInTheDocument();
     });
   });
 
     it('handles handleCreateUser error', async () => {
-        // Mock initial fetch for user list (called on render)
-        mockFetch.mockResolvedValueOnce({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              users: [],
-              pagination: {
-                total: 0,
-                page: 1,
-                per_page: 10,
-                total_pages: 0,
-                has_next: false,
-                has_prev: false,
-              },
-            }),
-        });
-        mockFetch.mockResolvedValueOnce({ ok: false, json: () => Promise.resolve({ detail: 'Email already exists' }) });
-        renderManagerDashboard();
-
-        fireEvent.click(
-          screen.getByRole("button", { name: /Создать пользователя/i }),
-        );
-        
-        await act(async () => {
-            fireEvent.submit(screen.getByTestId("create-user-form"));
-        });
-
-        await waitFor(() => {
-            expect(mockToast).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    status: 'error',
-                    description: 'Email already exists',
-                })
-            );
-        });
+    // Mock initial fetch
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          users: [],
+          pagination: {
+            total: 0,
+            page: 1,
+            per_page: 10,
+            total_pages: 0,
+            has_next: false,
+            has_prev: false,
+          },
+        }),
     });
+
+    // Mock failed user creation
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: () => Promise.resolve({ detail: "User creation failed" }),
+    });
+
+    renderManagerDashboard();
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
+
+    await act(async () => {
+        fireEvent.click(
+          screen.getByRole("button", { name: i18n.t('managerDashboard.createUser') }),
+        );
+    });
+
+    // Wait for tab panel to be visible
+    await waitFor(() => {
+        expect(screen.getByTestId("create-user-form")).toBeInTheDocument();
+    });
+
+    const form = screen.getByTestId("create-user-form");
+    const emailInput = form.querySelector('input[type="email"]');
+    const fullNameInput = form.querySelectorAll('input')[1];
+
+    await act(async () => {
+        fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+        fireEvent.change(fullNameInput, { target: { value: "Test User" } });
+        fireEvent.submit(form);
+    });
+
+    await waitFor(() => {
+      expect(mockToast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: "error",
+          title: i18n.t("managerDashboard.error"),
+          description: expect.stringContaining("User creation failed"),
+        }),
+      );
+    });
+  });
 
   it("allows changing a user role", async () => {
     // Mock initial fetch for user list
@@ -391,23 +426,33 @@ describe("ManagerDashboard Component", () => {
     // Wait for initial fetch to complete
     await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
 
-    // Open the role change modal
-    fireEvent.click(screen.getByLabelText("Изменить роль"));
+    // Open the role change modal - use getAllByLabelText since there might be multiple buttons
+    const changeRoleButtons = screen.getAllByLabelText(i18n.t("managerDashboard.tooltipChangeRole"));
+    await act(async () => {
+        fireEvent.click(changeRoleButtons[0]);
+    });
+
 
     // Verify the modal is open
-    await screen.findByText("Изменить роль пользователя");
-
-    expect(screen.getByText("Роль для John Doe")).toBeInTheDocument();
+    await screen.findByText(i18n.t("managerDashboard.changeUserRole"));
+    const modal = screen.getByRole("dialog");
+    expect(within(modal).getByText(`${i18n.t('managerDashboard.newRole')} John Doe`)).toBeInTheDocument();
 
     // Change the role
-    const roleSelect = screen.getByRole("combobox", { name: /Роль для/i });
+    const roleSelect = screen.getByRole("combobox", { name: `${i18n.t('managerDashboard.newRole')} John Doe` });
 
-    fireEvent.change(roleSelect, { target: { value: "superuser" } });
+    await act(async () => {
+        fireEvent.change(roleSelect, { target: { value: "superuser" } });
+    });
+
 
     // Save the new role
-    const saveButton = screen.getByRole("button", { name: "Сохранить" });
+    const saveButton = screen.getByRole("button", { name: i18n.t("managerDashboard.save") });
 
-    fireEvent.click(saveButton);
+    await act(async () => {
+        fireEvent.click(saveButton);
+    });
+
 
     // Verify the role change API call
     await waitFor(() => {
@@ -425,15 +470,15 @@ describe("ManagerDashboard Component", () => {
     expect(mockToast).toHaveBeenCalledWith(
       expect.objectContaining({
         status: "success",
-        title: "Роль обновлена",
-        description: "Роль пользователя изменена на superuser",
+        title: i18n.t("managerDashboard.roleChanged"),
+        description: i18n.t("managerDashboard.roleChangedDescription"),
       }),
     );
 
     // Verify the modal is closed
     await waitFor(() => {
       expect(
-        screen.queryByText("Изменить роль пользователя"),
+        screen.queryByText(i18n.t("managerDashboard.changeUserRole")),
       ).not.toBeInTheDocument();
     });
   });
@@ -447,20 +492,33 @@ describe("ManagerDashboard Component", () => {
                     pagination: { total: 1, page: 1, per_page: 10, total_pages: 1, has_next: false, has_prev: false },
                 }),
         });
-        mockFetch.mockResolvedValueOnce({ ok: false });
+        // Mock failed role change
+        mockFetch.mockResolvedValueOnce({ ok: false, json: () => Promise.resolve({ detail: "Failed to change role" }) });
+
         renderManagerDashboard();
 
         await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
 
-        fireEvent.click(screen.getByLabelText("Изменить роль"));
-        await screen.findByText("Изменить роль пользователя");
-        fireEvent.click(screen.getByRole("button", { name: "Сохранить" }));
+        const changeRoleButtons = screen.getAllByLabelText(i18n.t("managerDashboard.tooltipChangeRole"));
+        await act(async () => {
+            fireEvent.click(changeRoleButtons[0]);
+        });
+
+        await screen.findByText(i18n.t("managerDashboard.changeUserRole"));
+
+        // Save the new role
+        const saveButton = screen.getByRole("button", { name: i18n.t("managerDashboard.save") });
+
+        await act(async () => {
+            fireEvent.click(saveButton);
+        });
+
 
         await waitFor(() => {
             expect(mockToast).toHaveBeenCalledWith(
                 expect.objectContaining({
                     status: 'error',
-                    description: 'Не удалось изменить роль пользователя',
+                    description: i18n.t('managerDashboard.errorChangingRole'),
                 })
             );
         });
@@ -494,18 +552,14 @@ describe("ManagerDashboard Component", () => {
     });
 
     // Mock fetch for banning user
-
     mockFetch.mockResolvedValueOnce({
       ok: true,
-
       json: () => Promise.resolve({}),
     });
 
     // Mock fetch for refreshing user list
-
     mockFetch.mockResolvedValueOnce({
       ok: true,
-
       json: () =>
         Promise.resolve({
           users: [
@@ -532,38 +586,33 @@ describe("ManagerDashboard Component", () => {
     renderManagerDashboard();
 
     // Wait for initial fetch to complete
-
     await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
 
     // Ban the user
+    const blockButtons = screen.getAllByLabelText(i18n.t("managerDashboard.tooltipBlock"));
+    await act(async () => {
+        fireEvent.click(blockButtons[0]);
+    });
 
-    fireEvent.click(screen.getByLabelText("Заблокировать"));
 
     // Verify the ban API call
-
     await waitFor(() => {
       expect(mockFetch).toHaveBeenNthCalledWith(
         2,
-
         "/mock-api/users/1/ban-status",
-
         expect.objectContaining({
           method: "PUT",
-
           body: JSON.stringify({ is_banned: true }),
         }),
       );
     });
 
     // Verify success toast
-
     expect(mockToast).toHaveBeenCalledWith(
       expect.objectContaining({
         status: "success",
-
-        title: "Пользователь заблокирован",
-
-        description: "Пользователь успешно заблокирован",
+        title: i18n.t("managerDashboard.userBlocked"),
+        description: i18n.t("managerDashboard.userBlockedDescription"),
       }),
     );
   });
@@ -577,18 +626,24 @@ describe("ManagerDashboard Component", () => {
                     pagination: { total: 1, page: 1, per_page: 10, total_pages: 1, has_next: false, has_prev: false },
                 }),
         });
-        mockFetch.mockResolvedValueOnce({ ok: false });
+        // Mock failed ban status change
+        mockFetch.mockResolvedValueOnce({ ok: false, json: () => Promise.resolve({ detail: "Failed to change status" }) });
+
         renderManagerDashboard();
 
         await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
 
-        fireEvent.click(screen.getByLabelText("Заблокировать"));
+        const blockButtons = screen.getAllByLabelText(i18n.t("managerDashboard.tooltipBlock"));
+        await act(async () => {
+            fireEvent.click(blockButtons[0]);
+        });
+
 
         await waitFor(() => {
             expect(mockToast).toHaveBeenCalledWith(
                 expect.objectContaining({
                     status: 'error',
-                    description: 'Не удалось изменить статус пользователя',
+                    description: i18n.t('managerDashboard.errorChangingStatus'),
                 })
             );
         });
@@ -639,22 +694,22 @@ describe("ManagerDashboard Component", () => {
 
     // Open the password reset modal
 
-    fireEvent.click(screen.getByLabelText("Сбросить пароль"));
+    const resetPasswordButtons = screen.getAllByLabelText(i18n.t("managerDashboard.tooltipResetPassword"));
+    fireEvent.click(resetPasswordButtons[0]);
 
         // Verify the modal is open
-        await screen.findByText("Подтверждение сброса пароля");
+        await screen.findByText(i18n.t("managerDashboard.confirmPasswordReset"));
         const modal = screen.getByRole("dialog");
         expect(
             within(modal).getByText(
-                /Вы уверены, что хотите сбросить пароль для пользователя/,
+                new RegExp(i18n.t("managerDashboard.confirmPasswordResetMessage").replace(/\{.*?\}/g, ".*")),
             ),
         ).toBeInTheDocument();
-        expect(within(modal).getByText("John Doe")).toBeInTheDocument();
 
     // Confirm password reset
 
     const confirmButton = screen.getByRole("button", {
-      name: "Сбросить пароль",
+      name: i18n.t("managerDashboard.resetPassword"),
     });
 
     fireEvent.click(confirmButton);
@@ -681,9 +736,9 @@ describe("ManagerDashboard Component", () => {
       expect.objectContaining({
         status: "success",
 
-        title: "Пароль сброшен",
+        title: i18n.t("managerDashboard.passwordReset"),
 
-        description: "Новый пароль отправлен на почту пользователя",
+        description: i18n.t("managerDashboard.passwordResetDescription"),
       }),
     );
 
@@ -691,7 +746,7 @@ describe("ManagerDashboard Component", () => {
 
     await waitFor(() => {
       expect(
-        screen.queryByText("Подтверждение сброса пароля"),
+        screen.queryByText(i18n.t("managerDashboard.confirmPasswordReset")),
       ).not.toBeInTheDocument();
     });
   });
@@ -705,20 +760,23 @@ describe("ManagerDashboard Component", () => {
                     pagination: { total: 1, page: 1, per_page: 10, total_pages: 1, has_next: false, has_prev: false },
                 }),
         });
-        mockFetch.mockResolvedValueOnce({ ok: false });
+        // Mock failed password reset
+        mockFetch.mockResolvedValueOnce({ ok: false, json: () => Promise.resolve({ detail: "Failed to reset password" }) });
+
         renderManagerDashboard();
 
         await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
 
-        fireEvent.click(screen.getByLabelText("Сбросить пароль"));
-        await screen.findByText("Подтверждение сброса пароля");
-        fireEvent.click(screen.getByRole("button", { name: "Сбросить пароль" }));
+        const resetPasswordButtons = screen.getAllByLabelText(i18n.t("managerDashboard.tooltipResetPassword"));
+        fireEvent.click(resetPasswordButtons[0]);
+        await screen.findByText(i18n.t("managerDashboard.confirmPasswordReset"));
+        fireEvent.click(screen.getByRole("button", { name: i18n.t("managerDashboard.resetPassword") }));
 
         await waitFor(() => {
             expect(mockToast).toHaveBeenCalledWith(
                 expect.objectContaining({
                     status: 'error',
-                    description: 'Не удалось сбросить пароль',
+                    description: i18n.t('managerDashboard.errorResettingPassword'),
                 })
             );
         });

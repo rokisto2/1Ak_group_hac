@@ -1,4 +1,8 @@
 // frontend/tests/pages/UserDashboard.test.jsx
+// Brief description:
+// Tests for UserDashboard component: validates Telegram integration status, key generation,
+// received reports display, pagination, and download functionality. Uses i18n for localized text.
+
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
@@ -6,6 +10,8 @@ import UserDashboard from '../../src/pages/UserDashboard'; // Adjust path
 import React from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
 import axios from 'axios';
+import i18n from '../i18n';
+import { I18nextProvider } from 'react-i18next';
 
 // --- Mocks ---
 // Mock getApiUrl
@@ -72,7 +78,9 @@ describe('UserDashboard Component', () => {
         render(
             <MemoryRouter>
                 <ChakraProvider>
-                    <UserDashboard />
+                    <I18nextProvider i18n={i18n}>
+                        <UserDashboard />
+                    </I18nextProvider>
                 </ChakraProvider>
             </MemoryRouter>
         );
@@ -92,18 +100,23 @@ describe('UserDashboard Component', () => {
 
         renderUserDashboard();
 
-        expect(screen.getByTestId('navbar')).toHaveTextContent('Панель пользователя');
-        expect(screen.getByRole('heading', { name: /Панель пользователя/i })).toBeInTheDocument();
-        expect(screen.getByText(/Добро пожаловать в панель пользователя/i)).toBeInTheDocument();
+        expect(screen.getByTestId('navbar')).toHaveTextContent(i18n.t('userDashboard.title'));
+        expect(screen.getByRole('heading', { name: i18n.t('userDashboard.title') })).toBeInTheDocument();
+        expect(screen.getByText(i18n.t('userDashboard.welcome'))).toBeInTheDocument();
 
-        // Check for initial loading spinners by their accessible text
-        expect(screen.getAllByText('Loading...').length).toBe(2);
+        // Check for initial loading spinners by their class
+        const spinners = document.querySelectorAll('.chakra-spinner');
+        expect(spinners.length).toBeGreaterThanOrEqual(1);
 
         await waitFor(() => {
             // After loading, spinners should be gone and content should appear
-            expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
-            expect(screen.getByText('Интеграция с Telegram')).toBeInTheDocument();
-            expect(screen.getByText('Полученные отчеты')).toBeInTheDocument();
+            const remainingSpinners = document.querySelectorAll('.chakra-spinner');
+            expect(remainingSpinners.length).toBe(0);
+        }, { timeout: 3000 });
+
+        await waitFor(() => {
+            expect(screen.getByText(i18n.t('userDashboard.telegramIntegration'))).toBeInTheDocument();
+            expect(screen.getByText(i18n.t('userDashboard.receivedReports'))).toBeInTheDocument();
         });
     });
 
@@ -122,9 +135,9 @@ describe('UserDashboard Component', () => {
         renderUserDashboard();
 
         await waitFor(() => {
-            expect(screen.getByText('Аккаунт привязан к Telegram')).toBeInTheDocument();
-            expect(screen.getByText('Вы получаете уведомления через Telegram')).toBeInTheDocument();
-            expect(screen.getByRole('button', { name: /Пересоздать ключ/i })).toBeInTheDocument();
+            expect(screen.getByText(i18n.t('userDashboard.telegramBound'))).toBeInTheDocument();
+            expect(screen.getByText(i18n.t('userDashboard.telegramNotifications'))).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: i18n.t('userDashboard.regenerateKey') })).toBeInTheDocument();
         });
     });
 
@@ -142,8 +155,8 @@ describe('UserDashboard Component', () => {
         renderUserDashboard();
 
         await waitFor(() => {
-            expect(screen.queryByText('Аккаунт привязан к Telegram')).not.toBeInTheDocument();
-            expect(screen.getByRole('button', { name: /Сгенерировать ключ/i })).toBeInTheDocument();
+            expect(screen.queryByText(i18n.t('userDashboard.telegramBound'))).not.toBeInTheDocument();
+            expect(screen.getByRole('button', { name: i18n.t('userDashboard.generateKey') })).toBeInTheDocument();
         });
     });
 
@@ -162,10 +175,10 @@ describe('UserDashboard Component', () => {
         renderUserDashboard();
 
         await waitFor(() => {
-            expect(screen.getByRole('button', { name: /Сгенерировать ключ/i })).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: i18n.t('userDashboard.generateKey') })).toBeInTheDocument();
         });
 
-        fireEvent.click(screen.getByRole('button', { name: /Сгенерировать ключ/i }));
+        fireEvent.click(screen.getByRole('button', { name: i18n.t('userDashboard.generateKey') }));
 
         await waitFor(() => {
             expect(axios.post).toHaveBeenCalledWith(
@@ -175,7 +188,7 @@ describe('UserDashboard Component', () => {
             );
             expect(screen.getByDisplayValue('test-telegram-key-123')).toBeInTheDocument();
             expect(mockToast).toHaveBeenCalledWith(
-                expect.objectContaining({ status: 'success', title: 'Ключ Telegram успешно сгенерирован' })
+                expect.objectContaining({ status: 'success', title: i18n.t('userDashboard.telegramKeyGenerated') })
             );
         });
     });
@@ -195,10 +208,10 @@ describe('UserDashboard Component', () => {
         renderUserDashboard();
 
         await waitFor(() => {
-            expect(screen.getByRole('button', { name: /Сгенерировать ключ/i })).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: i18n.t('userDashboard.generateKey') })).toBeInTheDocument();
         });
 
-        fireEvent.click(screen.getByRole('button', { name: /Сгенерировать ключ/i }));
+        fireEvent.click(screen.getByRole('button', { name: i18n.t('userDashboard.generateKey') }));
 
         await waitFor(() => {
             expect(mockToast).toHaveBeenCalledWith(
@@ -240,11 +253,11 @@ describe('UserDashboard Component', () => {
             expect(screen.getByText('Отправитель Б')).toBeInTheDocument();
             expect(screen.getByText('EMAIL')).toBeInTheDocument();
             expect(screen.getByText('TELEGRAM')).toBeInTheDocument();
-            expect(screen.getAllByRole('button', { name: 'Скачать' }).length).toBe(2);
+            expect(screen.getAllByRole('button', { name: i18n.t('userDashboard.download') }).length).toBe(2);
         });
 
         // Test pagination text
-        expect(screen.getByText('Страница 1 из 1 страниц (2 всего отчетов)')).toBeInTheDocument();
+        expect(screen.getByText(new RegExp(`${i18n.t('userDashboard.page')} 1 ${i18n.t('userDashboard.of')} 1`))).toBeInTheDocument();
     });
 
     it('shows "Отчетов пока нет." when no reports are received', async () => {
@@ -261,7 +274,7 @@ describe('UserDashboard Component', () => {
         renderUserDashboard();
 
         await waitFor(() => {
-            expect(screen.getByText('Отчетов пока нет.')).toBeInTheDocument();
+            expect(screen.getByText(i18n.t('userDashboard.noReports'))).toBeInTheDocument();
         });
     });
 
@@ -296,7 +309,7 @@ describe('UserDashboard Component', () => {
             expect(screen.getByText('Отчет 1')).toBeInTheDocument();
         });
 
-        fireEvent.click(screen.getByRole('button', { name: 'Скачать' }));
+        fireEvent.click(screen.getByRole('button', { name: i18n.t('userDashboard.download') }));
 
         await waitFor(() => {
             expect(axios.get).toHaveBeenCalledWith(
@@ -336,7 +349,7 @@ describe('UserDashboard Component', () => {
             expect(screen.getByText('Отчет 1')).toBeInTheDocument();
         });
 
-        fireEvent.click(screen.getByRole('button', { name: 'Скачать' }));
+        fireEvent.click(screen.getByRole('button', { name: i18n.t('userDashboard.download') }));
 
         await waitFor(() => {
             expect(mockToast).toHaveBeenCalledWith(

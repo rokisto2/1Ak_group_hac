@@ -3,12 +3,14 @@
 // Tests for the Login page: form rendering, validation, visibility toggle, and login flow for different roles.
 // API calls and navigation are mocked to validate component behavior in isolation.
 
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import Login from '../../src/pages/Login'; // Adjust path
 import React from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
+import i18n from '../i18n';
+import { I18nextProvider } from 'react-i18next';
 
 // Mock getApiUrl since it's used in fetch call
 vi.mock('../../src/utils/api', () => ({
@@ -47,7 +49,9 @@ describe('Login Component', () => {
         render(
             <MemoryRouter>
                 <ChakraProvider>
-                    <Login />
+                    <I18nextProvider i18n={i18n}>
+                        <Login />
+                    </I18nextProvider>
                 </ChakraProvider>
             </MemoryRouter>
         );
@@ -55,36 +59,42 @@ describe('Login Component', () => {
     it('renders the login form elements', () => {
         renderLoginForm();
 
-        expect(screen.getByRole('heading', { name: /Логин/i })).toBeInTheDocument();
-        expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Пароль/i)).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Вход/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Показать/i })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: i18n.t('login.title') })).toBeInTheDocument();
+        expect(screen.getByLabelText(i18n.t('login.email'))).toBeInTheDocument();
+        expect(screen.getByLabelText(i18n.t('login.password'))).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: i18n.t('login.loginButton') })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: i18n.t('login.showPassword') })).toBeInTheDocument();
     });
 
-    it('toggles password visibility', () => {
+    it('toggles password visibility', async () => {
         renderLoginForm();
 
-        const passwordInput = screen.getByLabelText(/Пароль/i);
-        const toggleButton = screen.getByRole('button', { name: /Показать/i });
+        const passwordInput = screen.getByLabelText(i18n.t('login.password'));
+        const toggleButton = screen.getByRole('button', { name: i18n.t('login.showPassword') });
 
         expect(passwordInput).toHaveAttribute('type', 'password');
-        fireEvent.click(toggleButton);
+        await act(async () => {
+            fireEvent.click(toggleButton);
+        });
         expect(passwordInput).toHaveAttribute('type', 'text');
-        expect(screen.getByRole('button', { name: /Скрыть/i })).toBeInTheDocument();
-        fireEvent.click(toggleButton);
+        expect(screen.getByRole('button', { name: i18n.t('login.hidePassword') })).toBeInTheDocument();
+        await act(async () => {
+            fireEvent.click(toggleButton);
+        });
         expect(passwordInput).toHaveAttribute('type', 'password');
-        expect(screen.getByRole('button', { name: /Показать/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: i18n.t('login.showPassword') })).toBeInTheDocument();
     });
 
     it('shows validation errors for empty fields on submit', async () => {
         renderLoginForm();
 
-        fireEvent.click(screen.getByRole('button', { name: /Вход/i }));
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: i18n.t('login.loginButton') }));
+        });
 
         await waitFor(() => {
-            expect(screen.getByText('Email is required')).toBeInTheDocument();
-            expect(screen.getByText('Password is required')).toBeInTheDocument();
+            expect(screen.getByText(i18n.t('login.emailRequired'))).toBeInTheDocument();
+            expect(screen.getByText(i18n.t('login.passwordRequired'))).toBeInTheDocument();
         });
 
         // Ensure no navigation happens
@@ -103,14 +113,16 @@ describe('Login Component', () => {
         renderLoginForm();
 
         // Fill out the form
-        fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'test@example.com' } });
-        fireEvent.change(screen.getByLabelText(/Пароль/i), { target: { value: 'password123' } });
+        await act(async () => {
+            fireEvent.change(screen.getByLabelText(i18n.t('login.email')), { target: { value: 'test@example.com' } });
+            fireEvent.change(screen.getByLabelText(i18n.t('login.password')), { target: { value: 'password123' } });
+            fireEvent.click(screen.getByRole('button', { name: i18n.t('login.loginButton') }));
+        });
 
-        fireEvent.click(screen.getByRole('button', { name: /Вход/i }));
 
         // Wait for the asynchronous operations to complete
         await waitFor(() => {
-            expect(screen.getByRole('button', { name: /Вход/i })).not.toBeDisabled(); // Check if loading state is false
+            expect(screen.getByRole('button', { name: i18n.t('login.loginButton') })).not.toBeDisabled(); // Check if loading state is false
         });
 
         // Assert fetch was called correctly
@@ -137,7 +149,7 @@ describe('Login Component', () => {
         // Assert toast was shown
         expect(mockToast).toHaveBeenCalledWith(
             expect.objectContaining({
-                title: 'Login Successful',
+                title: i18n.t('login.loginSuccess'),
                 status: 'success',
             })
         );
@@ -158,10 +170,12 @@ describe('Login Component', () => {
         renderLoginForm();
 
         // Fill out the form
-        fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'test@example.com' } });
-        fireEvent.change(screen.getByLabelText(/Пароль/i), { target: { value: 'password123' } });
+        await act(async () => {
+            fireEvent.change(screen.getByLabelText(i18n.t('login.email')), { target: { value: 'test@example.com' } });
+            fireEvent.change(screen.getByLabelText(i18n.t('login.password')), { target: { value: 'password123' } });
+            fireEvent.click(screen.getByRole('button', { name: i18n.t('login.loginButton') }));
+        });
 
-        fireEvent.click(screen.getByRole('button', { name: /Вход/i }));
 
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith('/manager-dashboard');
@@ -180,10 +194,12 @@ describe('Login Component', () => {
         renderLoginForm();
 
         // Fill out the form
-        fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'test@example.com' } });
-        fireEvent.change(screen.getByLabelText(/Пароль/i), { target: { value: 'password123' } });
+        await act(async () => {
+            fireEvent.change(screen.getByLabelText(i18n.t('login.email')), { target: { value: 'test@example.com' } });
+            fireEvent.change(screen.getByLabelText(i18n.t('login.password')), { target: { value: 'password123' } });
+            fireEvent.click(screen.getByRole('button', { name: i18n.t('login.loginButton') }));
+        });
 
-        fireEvent.click(screen.getByRole('button', { name: /Вход/i }));
 
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith('/admin-dashboard');
@@ -202,10 +218,12 @@ describe('Login Component', () => {
         renderLoginForm();
 
         // Fill out the form
-        fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'test@example.com' } });
-        fireEvent.change(screen.getByLabelText(/Пароль/i), { target: { value: 'password123' } });
+        await act(async () => {
+            fireEvent.change(screen.getByLabelText(i18n.t('login.email')), { target: { value: 'test@example.com' } });
+            fireEvent.change(screen.getByLabelText(i18n.t('login.password')), { target: { value: 'password123' } });
+            fireEvent.click(screen.getByRole('button', { name: i18n.t('login.loginButton') }));
+        });
 
-        fireEvent.click(screen.getByRole('button', { name: /Вход/i }));
 
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith('/user-dashboard');
@@ -225,19 +243,21 @@ describe('Login Component', () => {
         renderLoginForm();
 
         // Fill out the form
-        fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'wrong@example.com' } });
-        fireEvent.change(screen.getByLabelText(/Пароль/i), { target: { value: 'wrongpass' } });
+        await act(async () => {
+            fireEvent.change(screen.getByLabelText(i18n.t('login.email')), { target: { value: 'wrong@example.com' } });
+            fireEvent.change(screen.getByLabelText(i18n.t('login.password')), { target: { value: 'wrongpass' } });
+            fireEvent.click(screen.getByRole('button', { name: i18n.t('login.loginButton') }));
+        });
 
-        fireEvent.click(screen.getByRole('button', { name: /Вход/i }));
 
         await waitFor(() => {
-            expect(screen.getByRole('button', { name: /Вход/i })).not.toBeDisabled();
+            expect(screen.getByRole('button', { name: i18n.t('login.loginButton') })).not.toBeDisabled();
         });
 
         // Assert toast was shown
         expect(mockToast).toHaveBeenCalledWith(
             expect.objectContaining({
-                title: 'Login Failed',
+                title: i18n.t('login.loginFailed'),
                 status: 'error',
             })
         );
