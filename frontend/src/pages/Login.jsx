@@ -49,9 +49,9 @@ function Login() {
             const data = await response.json();
 
             // Save authentication data
-            localStorage.setItem("accessToken", data.access_token);
-            localStorage.setItem("userRole", data.role);
-            localStorage.setItem("userId", data.user_id);
+            sessionStorage.setItem("accessToken", data.access_token);
+            sessionStorage.setItem("userRole", data.role);
+            sessionStorage.setItem("userId", data.user_id);
 
             toast({
                 title: t('login.loginSuccess'),

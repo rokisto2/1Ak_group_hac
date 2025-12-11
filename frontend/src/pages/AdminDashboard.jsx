@@ -46,7 +46,7 @@ function AdminDashboard() {
         try {
             const response = await axios.get(getApiUrl('/reports/admin'), {
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+                    Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`
                 }
             });
 
@@ -122,7 +122,7 @@ function AdminDashboard() {
         try {
             await axios.post(getApiUrl('/reports'), formData, { // Убираем query-параметр из URL
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+                    Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`
                 }
             });
 
@@ -166,7 +166,7 @@ function AdminDashboard() {
             const response = await axios.get(getApiUrl('/url-generate/download'), {
                 params: { object_key: objectKey },
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+                    Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`
                 }
             });
 

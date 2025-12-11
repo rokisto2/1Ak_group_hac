@@ -31,7 +31,7 @@ function UserDashboard() {
         try {
             const response = await axios.get(getApiUrl('/auth/telegram/is-bound'), {
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+                    Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`
                 }
             });
             setIsTelegramBound(response.data.is_bound);
@@ -54,7 +54,7 @@ function UserDashboard() {
             const response = await axios.get(getApiUrl('/reports/user/received-reports'), {
                 params: {page: currentPage, per_page: perPage},
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+                    Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`
                 }
             });
             setReports(response.data.items);
@@ -86,7 +86,7 @@ function UserDashboard() {
             const response = await axios.get(getApiUrl('/url-generate/download'), {
                 params: {object_key: objectKey},
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+                    Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`
                 }
             });
 
@@ -111,7 +111,7 @@ function UserDashboard() {
         try {
             const response = await axios.post(getApiUrl('/auth/telegram/generate'), {}, {
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+                    Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`
                 }
             });
 
