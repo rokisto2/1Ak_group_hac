@@ -42,7 +42,7 @@ vi.mock('../../src/components/Navbar', () => ({
 
 vi.mock('axios');
 
-const localStorageMock = (() => {
+const sessionStorageMock = (() => {
     let store = {};
     return {
         getItem: vi.fn((key) => store[key] || null),
@@ -57,7 +57,7 @@ const localStorageMock = (() => {
         }),
     };
 })();
-Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+Object.defineProperty(window, 'sessionStorage', { value: sessionStorageMock });
 
 
 
@@ -65,8 +65,8 @@ Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 describe('AdminDashboard Component', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        localStorageMock.clear();
-        localStorageMock.setItem('accessToken', 'fake_access_token');
+        sessionStorageMock.clear();
+        sessionStorageMock.setItem('accessToken', 'fake_access_token');
     });
 
     const renderAdminDashboard = () =>
@@ -150,7 +150,9 @@ describe('AdminDashboard Component', () => {
                 '/mock-api/reports',
                 expect.any(FormData),
                 expect.objectContaining({
-                    headers: { Authorization: 'Bearer fake_access_token' },
+                    headers: expect.objectContaining({
+                        Authorization: 'Bearer fake_access_token',
+                    }),
                 })
             );
             expect(mockToast).toHaveBeenCalledWith(

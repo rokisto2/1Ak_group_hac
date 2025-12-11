@@ -15,8 +15,8 @@ const AdminDashboard = () => <div>Admin Dashboard</div>;
 describe('ProtectedRoute Component', () => {
 
     beforeEach(() => {
-        // Clear localStorage before each test
-        localStorage.clear();
+        // Clear sessionStorage before each test
+        sessionStorage.clear();
     });
 
     const renderWithRouter = (ui, { route = '/', path = '/' } = {}) => {
@@ -46,8 +46,8 @@ describe('ProtectedRoute Component', () => {
     });
 
     it('renders the child component if user has required role and token', () => {
-        localStorage.setItem('accessToken', 'test-token');
-        localStorage.setItem('userRole', 'admin');
+        sessionStorage.setItem('accessToken', 'test-token');
+        sessionStorage.setItem('userRole', 'admin');
 
         const { getByText } = renderWithRouter(
             <ProtectedRoute allowedRoles={['admin']}>
@@ -59,8 +59,8 @@ describe('ProtectedRoute Component', () => {
     });
 
     it('redirects to user dashboard if user does not have the required role', () => {
-        localStorage.setItem('accessToken', 'test-token');
-        localStorage.setItem('userRole', 'user');
+        sessionStorage.setItem('accessToken', 'test-token');
+        sessionStorage.setItem('userRole', 'user');
 
         const { getByText } = renderWithRouter(
             <ProtectedRoute allowedRoles={['admin']}>
@@ -72,8 +72,8 @@ describe('ProtectedRoute Component', () => {
     });
 
     it('redirects to manager dashboard if user does not have the required role', () => {
-        localStorage.setItem('accessToken', 'test-token');
-        localStorage.setItem('userRole', 'manager');
+        sessionStorage.setItem('accessToken', 'test-token');
+        sessionStorage.setItem('userRole', 'manager');
 
         const { getByText } = renderWithRouter(
             <ProtectedRoute allowedRoles={['admin']}>
@@ -85,8 +85,8 @@ describe('ProtectedRoute Component', () => {
     });
 
     it('redirects to admin dashboard if user does not have the required role', () => {
-        localStorage.setItem('accessToken', 'test-token');
-        localStorage.setItem('userRole', 'superuser');
+        sessionStorage.setItem('accessToken', 'test-token');
+        sessionStorage.setItem('userRole', 'superuser');
 
         const { getByText } = renderWithRouter(
             <ProtectedRoute allowedRoles={['user']}>
@@ -98,8 +98,8 @@ describe('ProtectedRoute Component', () => {
     });
 
     it('redirects to login if user role is not recognized', () => {
-        localStorage.setItem('accessToken', 'test-token');
-        localStorage.setItem('userRole', 'unknown');
+        sessionStorage.setItem('accessToken', 'test-token');
+        sessionStorage.setItem('userRole', 'unknown');
 
         const { getByText } = renderWithRouter(
             <ProtectedRoute allowedRoles={['admin']}>

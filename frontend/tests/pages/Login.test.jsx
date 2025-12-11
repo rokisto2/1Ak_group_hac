@@ -41,8 +41,8 @@ describe('Login Component', () => {
     beforeEach(() => {
         // Clear all mocks before each test
         vi.clearAllMocks();
-        // Reset localStorage for each test
-        localStorage.clear();
+        // Reset sessionStorage for each test
+        sessionStorage.clear();
     });
 
     const renderLoginForm = () =>
@@ -141,10 +141,10 @@ describe('Login Component', () => {
         expect(formData.get('password')).toBe('password123');
 
 
-        // Assert localStorage was set
-        expect(localStorage.getItem('accessToken')).toBe('fake-token');
-        expect(localStorage.getItem('userRole')).toBe('user');
-        expect(localStorage.getItem('userId')).toBe('123');
+        // Assert sessionStorage was set
+        expect(sessionStorage.getItem('accessToken')).toBe('fake-token');
+        expect(sessionStorage.getItem('userRole')).toBe('user');
+        expect(sessionStorage.getItem('userId')).toBe('123');
 
         // Assert toast was shown
         expect(mockToast).toHaveBeenCalledWith(
@@ -266,3 +266,4 @@ describe('Login Component', () => {
         expect(mockNavigate).not.toHaveBeenCalled();
     });
 });
+
