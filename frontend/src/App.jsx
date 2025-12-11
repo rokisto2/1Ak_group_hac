@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import UserDashboard from './pages/UserDashboard';
 import ManagerDashboard from './pages/ManagerDashboard';
@@ -12,54 +12,52 @@ import ChatPage from "./pages/ChatPage";
 
 function App() {
     return (
-        <Router>
-            <Routes>
-                <Route path="/login" element={<Login />} />
+        <Routes>
+            <Route path="/login" element={<Login />} />
 
-                <Route
-                    path="/user-dashboard"
-                    element={
-                        <ProtectedRoute allowedRoles={['user']}>
-                            <UserDashboard />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/user-dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={['user']}>
+                        <UserDashboard />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/manager-dashboard"
-                    element={
-                        <ProtectedRoute allowedRoles={['manager']}>
-                            <ManagerDashboard />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/manager-dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={['manager']}>
+                        <ManagerDashboard />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/admin-dashboard"
-                    element={
-                        <ProtectedRoute allowedRoles={['superuser']}>
-                            <AdminDashboard />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route path="/send-report/:reportId" element={<SendReport />} />
+            <Route
+                path="/admin-dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={['superuser']}>
+                        <AdminDashboard />
+                    </ProtectedRoute>
+                }
+            />
+            <Route path="/send-report/:reportId" element={<SendReport />} />
 
-                <Route
-                    path="/chat"
-                    element={
-                        <ProtectedRoute allowedRoles={['user', 'manager', 'superuser']}>
-                            <ChatPage />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/chat"
+                element={
+                    <ProtectedRoute allowedRoles={['user', 'manager', 'superuser']}>
+                        <ChatPage />
+                    </ProtectedRoute>
+                }
+            />
 
-                {/* Redirect root to login page */}
-                <Route path="/" element={<Navigate to="/login" />} />
+            {/* Redirect root to login page */}
+            <Route path="/" element={<Navigate to="/login" />} />
 
-                {/* Catch-all route for non-existent URLs */}
-                <Route path="*" element={<NotFound />} />
-            </Routes>
-        </Router>
+            {/* Catch-all route for non-existent URLs */}
+            <Route path="*" element={<NotFound />} />
+        </Routes>
     );
 }
 
