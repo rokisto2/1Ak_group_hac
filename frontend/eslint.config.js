@@ -2,9 +2,18 @@ import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
+import vitest from 'eslint-plugin-vitest';
 
 export default [
   { ignores: ['dist'] },
+  {
+    files: ['electron/main.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
@@ -30,4 +39,17 @@ export default [
       ],
     },
   },
+  {
+    files: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    ...vitest.configs.recommended,
+    languageOptions: {
+        globals: {
+            ...globals.node,
+            ...vitest.environments.env.globals,
+        },
+    },
+    rules: {
+        ...vitest.configs.recommended.rules,
+    }
+  }
 ]

@@ -91,10 +91,6 @@ function AdminDashboard() {
         }
     };
 
-    useEffect(() => {
-        fetchReports(currentPage);
-    }, [currentPage]);
-
     const handleReportFileChange = (e) => {
         setReportFile(e.target.files[0]);
     };
@@ -155,8 +151,7 @@ function AdminDashboard() {
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        const dateWithOffset = new Date(date.getTime() + 3 * 60 * 60 * 1000);
-        return dateWithOffset.toLocaleString();
+        return date.toLocaleString();
     };
 
 
@@ -201,7 +196,7 @@ function AdminDashboard() {
                             <TabPanel>
                                 <Card>
                                     <CardBody>
-                                        <form onSubmit={handleCreateReport}>
+                                        <form onSubmit={handleCreateReport} data-testid="upload-form">
                                             <VStack spacing={4} align="stretch">
                                                 <FormControl isRequired>
                                                     <FormLabel>{t('adminDashboard.reportName')}</FormLabel>
@@ -221,6 +216,7 @@ function AdminDashboard() {
                                                             accept=".docx,.doc,.pdf"
                                                             onChange={handleReportFileChange}
                                                             display="none"
+                                                            data-testid="report-file-input"
                                                         />
                                                         <Button as="label" htmlFor="report-file" colorScheme="blue" mb={2}>
                                                             {t('adminDashboard.uploadFile')}
