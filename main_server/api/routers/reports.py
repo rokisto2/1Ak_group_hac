@@ -13,6 +13,7 @@ from main_server.services.report_service import ReportService
 from main_server.core.dependencies import get_s3_storage_repository, get_report_repository, get_report_delivery_service, \
     get_admin_user
 from main_server.db.repositories import ReportRepository, S3StorageRepository
+from fastapi import Form
 
 router = APIRouter(prefix="/reports")
 
@@ -20,7 +21,7 @@ router = APIRouter(prefix="/reports")
 @router.post("", name="create_report")
 async def create_report(
         file: UploadFile = File(...),
-        report_name: str = "Generated Report",
+        report_name: str = Form(...),
         storage_repo: S3StorageRepository = Depends(get_s3_storage_repository),
         report_repo: ReportRepository = Depends(get_report_repository),
         current_user: User = Depends(auth.get_current_user),
