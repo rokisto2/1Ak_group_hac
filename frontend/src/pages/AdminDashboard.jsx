@@ -12,7 +12,6 @@ import { getApiUrl } from "../utils/api.js";
 import { useNavigate } from "react-router-dom";
 import {useTranslation} from "react-i18next";
 
-
 function AdminDashboard() {
     const toast = useToast();
     const navigate = useNavigate();
@@ -22,25 +21,12 @@ function AdminDashboard() {
     const [reportFile, setReportFile] = useState(null);
     const { t } = useTranslation();
     const [reportName, setReportName] = useState("");
-
-
-
-
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
 
     useEffect(() => {
         fetchReports();
     }, []);
-
-
-
-
-
-
-
-
-
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
 
     const fetchReports = async () => {
         try {
@@ -60,7 +46,7 @@ function AdminDashboard() {
                 setReports([]);
             }
         } catch (error) {
-            console.error("Error fetching users:", error);
+            console.error("Error fetching reports:", error);
 
             toast({
                 title: t('adminDashboard.error'),
@@ -91,10 +77,6 @@ function AdminDashboard() {
         }
     };
 
-    useEffect(() => {
-        fetchReports(currentPage);
-    }, [currentPage]);
-
     const handleReportFileChange = (e) => {
         setReportFile(e.target.files[0]);
     };
@@ -117,11 +99,12 @@ function AdminDashboard() {
 
         const formData = new FormData();
         formData.append("file", reportFile);
-        formData.append("report_name", reportName.trim()); // Добавляем report_name в FormData
+        formData.append("report_name", reportName.trim());
 
         try {
-            await axios.post(getApiUrl('/reports'), formData, { // Убираем query-параметр из URL
+            await axios.post(getApiUrl('/reports'), formData, {
                 headers: {
+                    'Content-Type': 'multipart/form-data',
                     Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`
                 }
             });
@@ -152,14 +135,11 @@ function AdminDashboard() {
         }
     };
 
-
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         const dateWithOffset = new Date(date.getTime() + 3 * 60 * 60 * 1000);
         return dateWithOffset.toLocaleString();
     };
-
-
 
     const handleDownload = async (objectKey) => {
         try {
@@ -183,7 +163,6 @@ function AdminDashboard() {
         }
     };
 
-
     return (
         <Box width="100%" height="100vh" display="flex" flexDirection="column">
             <Navbar title={t('adminDashboard.title')} />
@@ -196,7 +175,7 @@ function AdminDashboard() {
                         <Tab>{t('adminDashboard.reportsHistoryTab')}</Tab>
                     </TabList>
 
-                    <Box width="800px"> {/* Фиксированная ширина для всех панелей */}
+                    <Box width="800px">
                         <TabPanels>
                             <TabPanel>
                                 <Card>
@@ -246,7 +225,6 @@ function AdminDashboard() {
                                     </CardBody>
                                 </Card>
                             </TabPanel>
-
 
                             <TabPanel>
                                 <Card>
@@ -307,7 +285,6 @@ function AdminDashboard() {
                                                     >
                                                         {t('adminDashboard.next')}
                                                     </Button>
-
                                                 </HStack>
                                             </>
                                         )}
