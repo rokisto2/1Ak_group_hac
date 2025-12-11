@@ -7,6 +7,7 @@ import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 import SendReport from "./pages/SendReport";
+import ChatPage from "./pages/ChatPage";
 
 
 function App() {
@@ -42,6 +43,15 @@ function App() {
                     }
                 />
                 <Route path="/send-report/:reportId" element={<SendReport />} />
+
+                <Route
+                    path="/chat"
+                    element={
+                        <ProtectedRoute allowedRoles={['user', 'manager', 'superuser']}>
+                            <ChatPage />
+                        </ProtectedRoute>
+                    }
+                />
 
                 {/* Redirect root to login page */}
                 <Route path="/" element={<Navigate to="/login" />} />
