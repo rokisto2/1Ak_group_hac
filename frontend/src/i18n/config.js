@@ -4,7 +4,7 @@ import ru from './locales/ru.json';
 import en from './locales/en.json';
 
 // Получаем язык из localStorage или используем язык браузера
-const savedLanguage = localStorage.getItem('language');
+const savedLanguage = sessionStorage.getItem('language');
 const browserLanguage = navigator.language.split('-')[0];
 const defaultLanguage = savedLanguage || (browserLanguage === 'ru' ? 'ru' : 'en');
 

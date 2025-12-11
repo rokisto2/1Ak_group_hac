@@ -1,16 +1,16 @@
-// src/components/ProtectedRoute.jsx
 import { Navigate } from 'react-router-dom';
+import { cloneElement } from 'react';
 
 function ProtectedRoute({ children, allowedRoles }) {
-    const userRole = localStorage.getItem('userRole');
-    const accessToken = localStorage.getItem('accessToken');
+    const userRole = sessionStorage.getItem('userRole');
+    const accessToken = sessionStorage.getItem('accessToken');
+    const userId = sessionStorage.getItem('userId');
 
     if (!accessToken) {
         return <Navigate to="/login" replace />;
     }
 
     if (allowedRoles && !allowedRoles.includes(userRole)) {
-        // Redirect to appropriate dashboard based on role
         switch(userRole) {
             case 'user':
                 return <Navigate to="/user-dashboard" replace />;
@@ -23,7 +23,8 @@ function ProtectedRoute({ children, allowedRoles }) {
         }
     }
 
-    return children;
+    // Передаем userId в дочерний компонент
+    return cloneElement(children, { userId });
 }
 
 export default ProtectedRoute;

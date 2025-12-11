@@ -48,7 +48,7 @@ function ManagerDashboard() {
                 getApiUrl(`/users/all?page=${pagination.page}&per_page=${pagination.per_page}`),
                 {
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+                        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
                     }
                 }
             );
@@ -92,7 +92,7 @@ function ManagerDashboard() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+                    Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
                 },
                 body: JSON.stringify(newUser)
             });
@@ -134,7 +134,7 @@ function ManagerDashboard() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+                    Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
                 },
                 body: JSON.stringify({ user_id: userForPasswordReset.id })
             });
@@ -168,7 +168,7 @@ function ManagerDashboard() {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+                    Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
                 },
                 body: JSON.stringify({
                     is_banned: !currentBanStatus
@@ -214,7 +214,7 @@ function ManagerDashboard() {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+                    Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
                 },
                 body: JSON.stringify({role: newRole})
             });
