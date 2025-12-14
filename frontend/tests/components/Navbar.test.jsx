@@ -29,7 +29,7 @@ vi.mock('@chakra-ui/react', async (importOriginal) => {
 describe('Navbar Component', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        localStorage.clear();
+        sessionStorage.clear();
     });
 
     const renderNavbar = (title) =>
@@ -47,17 +47,17 @@ describe('Navbar Component', () => {
     });
 
     it('handles logout correctly', () => {
-        localStorage.setItem('accessToken', 'test-token');
-        localStorage.setItem('userRole', 'user');
-        localStorage.setItem('userId', '123');
+        sessionStorage.setItem('accessToken', 'test-token');
+        sessionStorage.setItem('userRole', 'user');
+        sessionStorage.setItem('userId', '123');
 
         renderNavbar('Test Title');
 
         fireEvent.click(screen.getByRole('button', { name: /Выйти/i }));
 
-        expect(localStorage.getItem('accessToken')).toBeNull();
-        expect(localStorage.getItem('userRole')).toBeNull();
-        expect(localStorage.getItem('userId')).toBeNull();
+        expect(sessionStorage.getItem('accessToken')).toBeNull();
+        expect(sessionStorage.getItem('userRole')).toBeNull();
+        expect(sessionStorage.getItem('userId')).toBeNull();
 
         expect(mockToast).toHaveBeenCalledWith(
             expect.objectContaining({

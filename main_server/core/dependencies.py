@@ -30,13 +30,13 @@ async def get_email_service() -> EmailService:
         EmailService: сервис отправки электронной почты
     """
     global _email_service
-    # if _email_service is None:
-    #     _email_service = EmailService(
-    #         credentials_file=secret_settings.EMAIL_CREDENTIALS_FILE,
-    #         app_email=secret_settings.EMAIL_APP_ADDRESS,
-    #         app_name=secret_settings.EMAIL_APP_NAME,
-    #         token_file=secret_settings.EMAIL_TOKEN_PATH
-    #     )
+    if _email_service is None:
+        _email_service = EmailService(
+            credentials_file=secret_settings.EMAIL_CREDENTIALS_FILE,
+            app_email=secret_settings.EMAIL_APP_ADDRESS,
+            app_name=secret_settings.EMAIL_APP_NAME,
+            token_file=secret_settings.EMAIL_TOKEN_PATH
+        )
     return _email_service
 
 # Singleton экземпляр сервиса планировщика

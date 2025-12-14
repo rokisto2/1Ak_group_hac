@@ -42,7 +42,7 @@ vi.mock("../../src/components/Navbar", () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-const localStorageMock = (() => {
+const sessionStorageMock = (() => {
   let store = {};
   return {
     getItem: vi.fn((key) => store[key] || null),
@@ -57,13 +57,13 @@ const localStorageMock = (() => {
     }),
   };
 })();
-Object.defineProperty(window, "localStorage", { value: localStorageMock });
+Object.defineProperty(window, "sessionStorage", { value: sessionStorageMock });
 
 describe("ManagerDashboard Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorageMock.clear();
-    localStorageMock.setItem("accessToken", "fake_access_token");
+    sessionStorageMock.clear();
+    sessionStorageMock.setItem("accessToken", "fake_access_token");
     mockFetch.mockClear(); // Clear mockFetch calls before each test
   });
 
